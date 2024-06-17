@@ -23,6 +23,31 @@ Contains
 #### Pods
 Kubernetes does not deploy containers directly on the worker nodes, the containers are encapsulated into a kubernetes object known as a Pod. The containers inside a pod will have access to the same storage, the same network namespace and same fate(created together, destroyed together)
 
+- A pod should have mandatory apiVersion, kind, metadata and spec 
+- Metadata is a dictionary and it should have name and labels under it(what kubernetes expect)
+- Labels is also a dictionary and you can have many key value pairs for it
+- Spec is a dictionary and you can place multiple containers inside the container(List/Array element) tag
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+    type: front-end
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+    ports:
+    - containerPort: 80
+```
+```cmd
+kubectl apply -f pod-definition.yml
+kubectl get pods
+kubectl describe pods myapp-pod
+```
+
 #### Kubectl commands
 ```cmd
 - Run an applicatio
@@ -33,4 +58,10 @@ kubectl cluster-info
 
 - List all the nodes part of the cluster
 kubectl get nodes
+
+- Run a nginx pod
+kubectl run nginx --image nginx
+
+- Check created pod
+kubectl describe pods nginx
 ```
