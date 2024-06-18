@@ -42,11 +42,159 @@ spec:
     ports:
     - containerPort: 80
 ```
+
 ```cmd
 kubectl apply -f pod-definition.yml
 kubectl get pods
 kubectl describe pods myapp-pod
 ```
+
+#### Replication Controller
+Ensures that the specified number of pods are running at all times. To create multiple pods to share the load across them. When the number of users increase we deploy additional pods to balance the load across the pods. If the demand further increases and if we were to run out of resources on the first node we could deploy additional pods across the other nodes in the cluster.
+
+```yml
+apiVersion: v1
+kind: ReplicationController
+metadata: 
+  name: myapp-rc
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  replicas: 3
+```
+
+```cmd
+kubectl apply -f rc-definition.yml
+kubectl get replicationcontroller
+kubectl get pods
+kubectl delete replicationcontroller myapp-rc
+```
+
+#### ReplicaSet
+- It is mandatory to have a selector tag under spec if using ReplicaSet. This is the difference between ReplicationController and ReplicaSet. If you have created pods before creating the ReplicaSet, you can use the selector to identify those pods, or else you can add the pod-definition inside the template
+```yml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata: 
+  name: myapp-replicatset
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      type: front-end
+```
+
+```cmd
+kubectl apply -f replicaset-definition.yml
+kubectl get replicaset
+kubectl get pods
+kubectl delete replicaset myapp-replicatset
+kubectl describe replicaset
+kubectl delete pod $pod_name
+```
+
+#### Labels and Selectors
+We can use the labels as a filter to selector. This way replicaset will know which pods to monitor.
+```yml
+metadata: 
+  name: myapp-pod
+  labels: 
+    tier: front-end
+```
+
+```yml
+selector:
+  matchLabels:
+    tier: front-end
+```
+
+#### Scaling
+```cmd
+kubectl replace -f replicatset-definition.yml
+kubectl scale --replicas=6 -f replicatset-definition.yml
+```
+
+#### Deployments
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: myapp-deployment
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: myapp
+        type: front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  replicas: 3
+  selector:
+    matchLabels:
+      type: front-end
+```
+
+```cmd
+kubectl create -f deployment-definition.yml
+kubectl get deployments
+kubectl get replicasets
+kubectl get pods
+kubectl describe deployment
+```
+
+#### Updates and Rollbacks
+When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
+
+```cmd
+kubectl rollout status deployment/myapp-deployment
+kubectl rollout history deployment/myapp-deployment
+kubectl apply -f deployment-definition.yml
+kubectl setimage deployment/myapp-deployment nginx=nginx:1.9.1
+kubectl describe deployment myapp-deployment
+kubectl rollout undo deployment/myapp-deployment
+kubectl run nginx --image=nginx
+kubectl get deployments
+kubectl create -f deployment-definition.yml --record
+```
+
+- Deployment Strategies
+  1. Recreate: Destroy all the old versions and create the new versions. There will be an application downtime
+  2. Rolling update(default): Incremently bring down old version/create new version at a time. In this way application never goes down
+
+
+#### Networks
+IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT
 
 #### Kubectl commands
 ```cmd
