@@ -194,7 +194,77 @@ kubectl create -f deployment-definition.yml --record
 
 
 #### Networks
-IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT
+IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
+
+#### Services
+Kubernetes services enable communication between various components within and outside of the application.
+
+#### NodePort
+Service makes an internal pod accessible on a port on the pod
+
+<img src="images/nodeport_service.PNG" alt="Alt text" width="800" height="400">
+
+There are 3 ports involved
+  - Target Port(80): The port on the pod where the actual web server is runnning
+  - Port(80): The port on the service
+  - NodePort(30008): The node port(30000-32767)
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: myapp-nodeport-service
+spec: 
+  type: NodePort
+  ports:
+    - targetPort: 80
+      port: 80
+      nodePort: 30008
+  selector:
+    app: myapp
+    type: front-end
+```
+- 'port' is the only mandatory field and ports is an array
+
+```cmd
+kubectl create -f nodeport-service-definition.yml
+kubectl get services
+```
+
+In any case whether its a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
+
+- Get the ip using `ipconfig` and use `curl $ipconfg:30008`
+#### ClusterIP
+Service creates a virtual IP inside the cluster to enable communication between differnet services
+
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: myapp-clusterip-service
+spec: 
+  type: ClusterIP
+  ports:
+    - targetPort: 80
+      port: 80
+  selector:
+    app: myapp
+```
+
+Service can be accessed by other pods using cluster ip or the service name
+
+#### LoadBalancer
+Provisions a load balancer for our application
+
+#### Microservices
+
+```cmd
+docker run -d --name=redis redis
+docker run -d --name=db -e POSTGRES_PASSWORD=123 postgres:16
+docker run -d --name=vote -p 5000:80 saiachyuthm/voting-app
+docker run -d --name=result -p 5001:80 saiachyuthm/result-app
+docker run -d --name=worker saiachyuthm/worker-app
+```
 
 #### Kubectl commands
 ```cmd
