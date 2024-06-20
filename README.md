@@ -261,10 +261,26 @@ Provisions a load balancer for our application
 ```cmd
 docker run -d --name=redis redis
 docker run -d --name=db -e POSTGRES_PASSWORD=123 postgres:16
-docker run -d --name=vote -p 5000:80 saiachyuthm/voting-app
-docker run -d --name=result -p 5001:80 saiachyuthm/result-app
-docker run -d --name=worker saiachyuthm/worker-app
+docker run -d --name=vote -p 5000:80 --link redis:redis saiachyuthm/voting-app
+docker run -d --name=result -p 5001:80 --link db:db saiachyuthm/result-app
+docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-app
 ```
+
+- Steps
+  1. Creating the pods
+    - voting-app-pod exposing containerPort 80
+    - worker-app-pod not exposing any ports
+    - result-app-pod exposing containerPort 80
+    - redis-pod exposing containerPort 6379
+    - postgres-pod exposing containerPort 5432
+
+  2. Creating the services
+    - Internal
+      - redis-service exposing port 6379, targetPort 6379, selectors of redis-pod and name as `redis`
+      - postgres-service exposing port 5432, targetPort 5432, selectors of postgres-pod and name as `db`
+    - External
+      - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
+      - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
 
 #### Kubectl commands
 ```cmd
