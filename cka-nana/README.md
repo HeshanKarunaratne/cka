@@ -83,4 +83,127 @@
 1. Create 3 nodes(master-node, worker-node-1, worker-node-2)
     - Make sure worker nodes have more resources than master node
 2. Deploy container runtime, kube proxy and kubelet on each node
-3. Deploy api server, scheduler, controller  manager and etcd pods in master node 
+3. Deploy api server, scheduler, controller  manager and etcd pods in master node
+
+#### Namespace
+- Organize resources in namespaces
+- Virtual cluster inside a cluster
+- Use cases
+    1. Structure components
+    2. Avoid conflicts between teams
+    3. Share services between different environments
+    4. Resource limits on namespace level
+```cmd
+kubectl create namespace $name_space
+kubectl get namespaces
+kubectl get pod -n $namespace
+kubectl describe svc $service_name
+kubectl get ep
+kubectl get deployment --show-labels
+
+- Get all the services with the label
+kubectl get svc -l app=nginx
+
+kubctl scale --replicas=2 -f nginx-service.yml
+
+- Record the history
+kubectl scale deployment --replicas=5 nginx-deployment --record
+
+- Check the history
+kubectl rollout history deployment/nginx-deployment
+
+- Open up bash shell for a pod
+kubectl exec -it test-nginx-service -- bash
+
+- Check if pod to pod communication works
+curl $cluster_ip:$cluster_port
+
+- Check all the default values when kubeadm execute
+kubeadm config print init defaults
+
+- Create a new service without yml file
+kubectl create service clusterip $service_name --tcp=80:80
+
+- Create an alias which is only applicable for that session
+alias k=kubectl
+
+- Creating a sample service, not executing it and saving it as a yaml file
+kubectl create service clusterip $service_name --tcp=80:80 --dry-run=client -o yaml > myService.yml
+
+- Create a sample ingress
+kubectl create ingress my-app-ingress --rule=host/path=service:port --dry-run=client -o yaml > my-ingress.yml
+
+- Describe cluster role
+kubectl describe clusterrole $cluster_role_name
+
+- Create a clusterrolebinding to map clusterrole per specific user/group
+kubectl create clusterrolebinding dev-crb --clusterrole=dev-cr --user=tom --dry-run=client -o yaml > dev-crb.yml
+
+- Using auth sub commands
+kubectl auth can-i get node
+kubectl auth --kubeconfig config can-i get node --as $user_name
+
+- Create a service account
+kubectl create serviceaccount jenkins --dry-run=client -o yaml > jenkins-sa.yml
+
+- Create a cicd role
+kubectl create role cicd-role --verb=create,list,update --resource=deployments.apps,services --dry-run=client -o yaml > cicd-role.yml
+
+- Checking logs in a sidecar container
+kubectl logs nginx-deployment-64c549f7f5-ndw2f -c log-sidecar
+```
+
+- Below yaml format is a better way to create namespace with resources
+```yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: my-namespace
+```
+
+#### Networks
+- Every pod gets its own unique IP address
+- Pods on same node can communicate with that IP address
+- Pods on different node can communicate with that IP address without NAT(Network Address Translation)
+
+#### Labels
+- Use cases of using labels
+    1. Label to identify and target any kubernetes component
+
+#### Fully Qualified Domain Name
+- When you try to access a pod from a different namespace you need to use the FQDN like below
+    - $service_name.$namespace.svc.cluster.local <= FQDN
+
+#### Ingress
+- Usages
+    1. Configure secure connection
+    2. Loadbalancing to different services
+    3. Configure routing
+    4. Single entrypoint for all the resources
+
+### RBAC(Role Based Access Control)
+
+#### Role
+- With Role component you can define namespaced permissions
+- Bound to a specific Namespace
+- What resources in that namespace you can access?
+    - Pod/Deployment/Service/etc
+- What action you can do with this resources?
+    - list/get/update/delete/etc
+- `No information on WHO gets these permissions` - You need to use Role Binding for that(Bind to user of group)
+
+#### ClusterRole
+- Defines resources and permissions cluster wide
+- Use `ClusterRoleBinding` component to bind these roles to cluster groups and users
+
+#### SideCar Container
+- You can have multiple containers inside a pod, where the container providing helper functionality is called the sidecar container
+- They are communicate without needing a service name
+
+#### Persistent Volumes
+- PV are resources that need to be there before the pod that depends on it is created
+
+#### Persistent Volume Claim
+- Application has to claim the PV
+- Pod requests the volume through the PV claim
