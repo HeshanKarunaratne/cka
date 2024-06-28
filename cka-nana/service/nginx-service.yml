@@ -6,11 +6,9 @@ metadata:
     app: nginx
     svc: test-nginx
 spec:
-  type: LoadBalancer
   selector:
     app: nginx
   ports:
     - protocol: TCP
       port: 8080
       targetPort: 80
-      nodePort: 30008
