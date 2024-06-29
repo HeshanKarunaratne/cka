@@ -151,6 +151,15 @@ kubectl create role cicd-role --verb=create,list,update --resource=deployments.a
 
 - Checking logs in a sidecar container
 kubectl logs nginx-deployment-64c549f7f5-ndw2f -c log-sidecar
+
+- Restart all the pods in a deployment/statefulSet
+kubectl rollout restart deployment/my-db
+
+- Labeling different resources
+kubectl label node $node_name type=cpu
+
+- Can check the node for taints
+kubectl describe node master
 ```
 
 - Below yaml format is a better way to create namespace with resources
@@ -207,3 +216,58 @@ metadata:
 #### Persistent Volume Claim
 - Application has to claim the PV
 - Pod requests the volume through the PV claim
+
+#### ConfigMaps and Secrets
+- Pods can consume ConfigMaps or Secrets in 2 different ways
+    - As individual values using Env variables
+    - As configuration files using Volumes
+
+#### nodeName
+- Tells the scheduler to schedule the pod on a given node
+
+#### Taints
+- Nodes that have Taints stops pods from scheduling inside that nodes if they have specific keyValues defined
+- Master node have Taints to stop pods scheduling inside node
+- Kubeadm sets the taints when bootstrapping
+
+#### Tolerations
+- Applied to pods
+- Allow the pods to schedule onto nodes with matching Taints
+
+#### Inter-Pod Anti-Affinity
+- Pod should not run on a node if that node is already runnning one or more pods with a specific label
+
+#### Inter-Pod Affinity
+- Pod should run on a node if that node is already runnning one or more pods with a specific label
+
+#### Liveness-Probe
+- Health checks only after the container started
+- 3 ways to check the health status
+    1. Executing probe - execute specific command
+    2. TCP probe - connect to tcp socket
+    3. HTTP probe - sends a request to specified port and path
+
+#### Readiness-Probe
+- It tells kubernetes that it is ready to listen to traffic
+
+#### Context
+```cmd
+- Display list of context
+kubectl config get-contexts
+
+- Display the current context
+kubectl config current-context
+
+- Set context
+kubectl config set-context --current --namespace=kube-system
+```
+
+#### Network Policies
+- Which pods can talk to which pods
+
+```cmd
+kubectl create ns myapp
+kubectl apply -f .
+kubectl config set-context --current --namespace myapp
+
+```
