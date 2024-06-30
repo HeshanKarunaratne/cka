@@ -46,7 +46,28 @@ spec:
 ```cmd
 kubectl apply -f pod-definition.yml
 kubectl get pods
-kubectl describe pods myapp-pod
+kubectl describe pod myapp-pod
+```
+
+##### Questions - Pods
+```cmd
+- Check running pods
+kubectl get pods
+
+- Create a new pod with the nginx image
+kubectl run nginx --image=nginx
+
+- What is the image used to create the new pods?
+kubectl describe pod newpods-92tl5
+
+- Which nodes are these pods placed on?
+kubectl get pods -o wide
+
+- What images are used in the new webapp pod?
+kubectl describe pod webapp
+
+- Delete the webapp Pod
+kubectl delete pod webapp
 ```
 
 #### Replication Controller
