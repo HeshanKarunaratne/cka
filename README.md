@@ -138,6 +138,24 @@ kubectl describe replicaset
 kubectl delete pod $pod_name
 ```
 
+##### Questions - ReplicaSet
+```cmd
+- How many ReplicaSets exist on the system?
+kubectl get replicasets
+
+- What is the image used to create the pods in the new-replica-set?
+kubectl describe replicaset new-replica-set
+
+- Delete any one of the 4 PODs?
+kubectl delete pod new-replica-set-55nxs
+
+- Delete the two newly created ReplicaSets - replicaset-1 and replicaset-2?
+kubectl delete rs replicaset-1 replicaset-2
+
+- Scale the ReplicaSet to 5 PODs?
+kubectl scale --replicas=5 rs new-replica-set
+```
+
 #### Labels and Selectors
 We can use the labels as a filter to selector. This way replicaset will know which pods to monitor.
 ```yml
@@ -191,7 +209,54 @@ kubectl create -f deployment-definition.yml
 kubectl get deployments
 kubectl get replicasets
 kubectl get pods
-kubectl describe deployment
+kubectl describe deployment $deployment_name
+```
+
+##### Questions - Deployment
+```cmd
+- How many deployments exists in the system?
+kubectl get deployments
+
+- What is the image used to create the pods in the new deployment?
+kubectl describe deployment frontend-deployment
+
+- Create a new Deployment with the below attributes using your own deployment definition file. Name: httpd-frontend; Replicas: 3; Image: httpd:2.4-alpine
+kubectl create deployment httpd-frontend --replicas=3 --image=httpd:2.4-alpine
+```
+
+#### Namespaces
+```text
+db-service   . dev       . svc     . cluster.local
+Service Name   Namespace   Service   Domain   
+```
+
+```cmd
+- Get pods in a different namespace
+kubectl get pods --namespace=kube-system
+
+- Create a namespace
+kubectl create namespace $namespace_name
+
+- Set the namespace to 'dev'
+kubectl config set-context $(kubectl config current-context) --namespace=dev
+
+- Get pods in all the namespaces
+kubectl get pods --all-namespaces
+```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: myapp-pod
+  namespace: dev
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  containers:
+  - name: nginx-container
+    image: nginx
 ```
 
 #### Updates and Rollbacks
