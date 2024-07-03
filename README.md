@@ -428,3 +428,161 @@ kubectl run nginx --image nginx
 - Check created pod
 kubectl describe pods nginx
 ```
+
+#### Docker CMD and ENTRYPOINT
+- If you use a command with CMD it is hard coded, so will get the same output again and again
+- To pass variable from command line use ENTRYPOINT
+- Use ENTRYPOINT to pass value and CMD to keep a default value
+
+```dockerfile
+FROM ubuntu
+ENTRYPOINT ["sleep"]
+CMD ["5"]
+```
+
+```cmd
+docker run --name ubuntu-sleeper ubuntu-sleeper 10
+```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    command: ["sleep2.0"]
+    args: ["5"]
+```
+
+- DOCKER     | KUBERNETES
+- ENTRYPOINT | command
+- CMD        | args
+
+#### Questions - Test Commands and Arguments
+```text
+- Inspect the two files under directory webapp-color-3. What command is run at container startup?
+
+- Dockerfile
+FROM python:3.6-alpine
+RUN pip install flask
+COPY . /opt/
+EXPOSE 8080
+WORKDIR /opt
+ENTRYPOINT ["python", "app.py"]
+CMD ["--color", "red"]
+
+- webapp-pod.yml
+apiVersion: v1 
+kind: Pod 
+metadata:
+  name: webapp-green
+  labels:
+      name: webapp-green 
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-color
+    command: ["--color","green"]
+
+--color green
+
+- Create a pod with the given specifications. By default it displays a blue background. Set the given command line arguments to change it to green
+kubectl run webapp-green --image=kodekloud/webapp-color -- --color green
+
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: webapp-green
+  name: webapp-green
+spec:
+  containers:
+  - image: kodekloud/webapp-color
+    name: webapp-green
+    args: ["--color", "green"]
+```
+
+#### Environement variables
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    env:
+    - name: APP_COLOR
+      value: red
+```
+
+#### ConfigMaps
+
+```cmd
+kubectl create configmap $config_name --from-literal=APP_COLOR=blue
+kubectl create configmap $config_name --from-file=<path-to-file>
+kubectl get configmaps
+kubectl describe configmaps
+```
+
+```yml
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: app-config
+data:
+  APP_COLOR: blue
+  APP_MODE: prod
+```
+
+- Whole configmap
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    envFrom:
+    - configMapRef:
+      name: app-config
+```
+- Single key value
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    env:
+    - name: APP_COLOR
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          value: APP_COLOR
+```
+
+##### Questions - ConfigMap
+```cmd
+- How many Secrets exist on the system?
+kubectl get secrets
+
+- How many secrets are defined in the dashboard-token secret?
+kubectl describe secret dashboard-token
+
+- The reason the application is failed is because we have not created the secrets yet. Create a new secret named db-secret with the data given below. Name: db-secret; DB_Host=sql01; DB_User=root; DB_Password=password123
+kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --
+from-literal=DB_Password=password123
+
+- 
+```
