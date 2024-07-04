@@ -572,7 +572,22 @@ spec:
           value: APP_COLOR
 ```
 
-##### Questions - ConfigMap
+##### Questions - ConfigMaps
+```cmd
+- What is the environment variable name set on the container in the pod?
+kubectl describe pod webapp-color
+
+- How many ConfigMaps exists in the default namespace?
+kubectl get configmaps
+
+- Identify the database host from the config map db-config?
+kubectl describe configmap db-config
+
+- Create a configmap?
+kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue --from-literal=APP_OTHER=disregard
+```
+
+##### Questions - Secrets
 ```cmd
 - How many Secrets exist on the system?
 kubectl get secrets
@@ -583,6 +598,4 @@ kubectl describe secret dashboard-token
 - The reason the application is failed is because we have not created the secrets yet. Create a new secret named db-secret with the data given below. Name: db-secret; DB_Host=sql01; DB_User=root; DB_Password=password123
 kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --
 from-literal=DB_Password=password123
-
-- 
 ```
