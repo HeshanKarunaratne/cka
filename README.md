@@ -569,7 +569,7 @@ spec:
       valueFrom:
         configMapKeyRef:
           name: app-config
-          value: APP_COLOR
+          key: APP_COLOR
 ```
 
 ##### Questions - ConfigMaps
@@ -587,13 +587,36 @@ kubectl describe configmap db-config
 kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue --from-literal=APP_OTHER=disregard
 ```
 
+#### Secrets
+- Store sensitive information
+- Secrets are not encrypted , only encoded
+- Configure RBAC for secrets, anyone who is able to create pods/deployments in the same namespace can access the secrets
+
+```cmd
+kubectl create secret generic app-secret --from-literal=DB_HOST=mysql
+echo -n 'text' | base64
+kubectl describe secrets
+kubectl get secret app-secret -o yaml
+echo -n 'gsgs=' | base64 --decode
+```
+
+```yml
+apiVersion: v1
+kind: Secret
+metadata: 
+  name: app-secret
+data:
+  APP_COLOR: blue
+  APP_MODE: prod
+```
+
 ##### Questions - Secrets
 ```cmd
 - How many Secrets exist on the system?
 kubectl get secrets
 
 - How many secrets are defined in the dashboard-token secret?
-kubectl describe secret dashboard-token
+kubectl get secret dashboard-token
 
 - The reason the application is failed is because we have not created the secrets yet. Create a new secret named db-secret with the data given below. Name: db-secret; DB_Host=sql01; DB_User=root; DB_Password=password123
 kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --
