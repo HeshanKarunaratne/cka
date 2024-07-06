@@ -622,3 +622,61 @@ kubectl get secret dashboard-token
 kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --
 from-literal=DB_Password=password123
 ```
+
+#### Encrypting secret data at REST
+```cmd
+- Create a secret
+kubectl create secret generic my-secret --from-literal=key1=supersecret
+
+- Check the created secret
+kubectl get secret my-secret -o yaml
+
+- Decode and see the secret(anyone have access to do this)
+echo -n 'c3VwZXJzZWNyZXQ=' | base64 --decode
+
+- Install etcdctl
+apt-get install etcd-client
+
+- Still you can see the secret value in plain text in etcd, thats why we need to encrypt it
+ETCDCTL_API=3 etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get /registry/secrets/default/my-secret | hexdump -C
+
+```
+
+#### Container Security
+```cmd
+docker run --user=1001 ubuntu sleep 3600
+docker run --cap-add MAC_ADMIN ubuntu
+docker run --cap-drop MAC_ADMIN ubuntu
+```
+
+- Pod level security
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  securityContext:
+    runAsUser: 1000
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      commands: ["sleep", "3000"]
+```
+
+- Container level security: Capabilities are only applicable at container level
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      commands: ["sleep", "3000"]
+      securityContext:
+        runAsUser: 1000
+        capabilities:
+          add: ["MAC_ADMIN"]
+```
