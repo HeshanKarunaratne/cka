@@ -680,3 +680,66 @@ spec:
         capabilities:
           add: ["MAC_ADMIN"]
 ```
+
+##### Questions - Security Contexts
+```cmd
+- What is the user used to execute the sleep process within the ubuntu-sleeper pod?
+kubectl edit pod ubuntu-sleeper
+kubectl exec ubuntu-sleeper -- whoami
+
+- How to replace a pod without deleting it
+kubectl replace --force -f /tmp/kubectl-edit-3136779847.yaml
+kubectl exec ubuntu-sleeper -- whoami
+```
+
+#### Service Accounts
+- There are 2 types of accounts in kubernetes
+  1. User Accounts - Used by humans
+    eg: Admin performing administrative task, developer accessing the cluster to deploy application
+  2. Service Accounts - Used by an application
+    eg: Prometheus uses kubernetes service account to pull the kubernetes api for performance metrics, jenkins to deploy application to kubernetes cluster
+
+- When a service account is created, it creates a token and you can use this token as a Bearer token when making API calls to kubernetes cluster
+- Kubernetes mount default service account to pods automatically
+
+```cmd
+- Create a service account
+kubectl create serviceaccount $service_account_name
+
+- Retrieve service account
+kubectl get serviceaccount
+
+- Describe a service account
+kubectl describe serviceaccount $service_account_name
+
+- Use the token for api calls
+curl https://192.168.56.70:6555/api -insecure --header "Authorization: Bearer $token"
+```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-kubernetes-dashboard
+spec:
+  containers:
+    - name: my-dashboard
+      image: my-dashboard
+  serviceAccountName: dashboard-sa
+```
+
+##### Questions - Service Accounts
+```cmd
+- How many Service Accounts exist in the default namespace?
+kubectl get serviceaccount
+
+- We just deployed the Dashboard application. Inspect the deployment. What is the image used by the deployment?
+kubectl describe deployment web-dashboard
+
+- Inspect the Dashboard Application POD and identify the Service Account mounted on it?
+kubectl describe pod web-dashboard-6cbbc88b59-r2pnl
+
+- Create a new ServiceAccount named dashboard-sa?
+kubectl create serviceaccount dashboard-sa
+
+```
