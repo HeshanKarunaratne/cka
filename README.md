@@ -743,3 +743,35 @@ kubectl describe pod web-dashboard-6cbbc88b59-r2pnl
 kubectl create serviceaccount dashboard-sa
 
 ```
+
+#### Resource Requirements
+- Kubernetes assumes that a Pod or a container within a pod requires 0.5 CPU and 256 mebibyte(Mi) of memory.
+- Limits and requests are set to each container within the pod
+- When a pod tries to exceed resources beyond its specified limit
+  - CPU: Kubernetes throttles
+  - Memory: A container can use more memory than its limit, but if the container tries to consume more memory than its limit constantly the pod will be terminated
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-kubernetes-dashboard
+spec:
+  containers:
+    - name: my-dashboard
+      image: my-dashboard
+      ports:
+      - containerPort: 8080
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: 1
+        limits:
+          memory: "2Gi"
+          cpu: 2
+```
+
+##### Questions - Resource Limits
+```cmd
+- A pod called rabbit is deployed. Identify the CPU requirements set on the Pod
+kubectl describe pod rabbit
+```
