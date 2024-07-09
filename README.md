@@ -775,3 +775,123 @@ spec:
 - A pod called rabbit is deployed. Identify the CPU requirements set on the Pod
 kubectl describe pod rabbit
 ```
+
+#### Taints and Tolerations
+- Taints and Toleration are used to set restrictions on what pods can be scheduled on a node
+- If we apply a toleration on a pod, and a taint on a node, that specific pod can only be deployed in that node because of the toleration
+- Taints are set on nodes while Tolerations are set on pods
+- There are 3 taint-effects
+  1. NoSchedule: Pods will not be scheduled on the node
+  2. PreferNoSchedule: The system will try to avoid placing a pod on the node
+  3. NoExecute: New pods will not be scheduled on the node, if there are any existing pods on the node that do not tolerate the taint will be evicted
+- Master node have a taint to stop pods from being scheduled on the node itself
+
+```cmd
+- Apply a Taint on a node
+kubectl taint nodes $node_name key=value:$taint_effect
+kubectl taint nodes node1 app=blue:NoSchedule
+
+- Check master node taint
+kubectl describe node kubemaster | grep Taint
+```
+- Add a Toleration to a Pod
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      tolerations:
+      - key: "app"
+        operator: "Equal"
+        value: "blue"
+        effect: "NoSchedule"
+```
+
+##### Questions - Taints and Tolerations
+```cmd
+- How many nodes exist on the system?
+kubectl get nodes
+
+- Do any taints exist on node01 node?
+kubectl describe node node01 | grep Taints
+
+- Create a taint on node01 with key of spray, value of mortein and effect of NoSchedule
+kubectl taint nodes node01 spray=mortein:NoSchedule
+
+- Create a new pod with the nginx image and pod name as mosquito
+kubectl run mosquito --image=ngin
+
+- Do you see any taints on controlplane node?
+kubectl describe node controlplane | grep Taint
+
+- Remove the taint on controlplane, which currently has the taint effect of NoSchedule.
+kubectl edit node controlplane
+```
+
+#### Node Selectors
+- We can define some limitations on the pod so that they can only run on particular nodes
+- key=value labels are assigned to the node, scheduler uses these labels to match and identify the right node to place the pods on
+- There are some limitations with NodeSelectors, for that we have NodeAffinity and NodeAntiAffnity rules
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+  nodeSelector:
+    size: Large
+```
+
+```cmd
+- Labeling a node
+kubectl label node $node_name $key=$value
+```
+
+#### NodeAffinity
+- To make sure that pods are hosted on particular nodes
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In # NotIn Exists
+            values:
+            - Large
+            - Medium
+```
+
+- Node Affinity Types
+  1. requiredDuringSchedulingIgnoredDuringExecution: If these rules are matching only pods are placed on nodes
+  2. preferredDuringSchedulingIgnoredDuringExecution: If there are no matching rules pods might schedule on any node
+  3. requiredDuringSchedulingRequiredDuringExecution
+   
+##### Questions - Node Affinity
+```cmd
+- How many Labels exist on node node01?
+kubectl get nodes node01 --show-labels
+
+- Apply a label color=blue to node node01?
+kubectl label node node01 color=blue
+
+- Create a new deployment named blue with the nginx image and 3 replicas?
+kubectl create deployment blue --image=nginx --replicas=3
+```
