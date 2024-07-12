@@ -895,3 +895,47 @@ kubectl label node node01 color=blue
 - Create a new deployment named blue with the nginx image and 3 replicas?
 kubectl create deployment blue --image=nginx --replicas=3
 ```
+
+#### Taints Tolerations and Node Affinity
+
+- We have Blue, Red, Green and Other nodes. We have blue, red, green and other pods as well. Each separate pod must reside in the correct node. It should not be scheduled in a different node.
+- If use use both taints and tolerations that will not make sure that respective pods will not ends up in a different node which doesnt have any taints at all. It will make sure if there is a taint on the node, only tolerable pods are placed upon the node.
+- If we use node affinity to label each nodes and then set nodeSelectors on the pods to tie them to their nodes. That will not make sure that other pods will be placed on these nodes.
+- For this to happen, we can use both Taint and Tolerations along with node affinity
+- We use Taints and Tolerations to stop other pods from placed on our nodes, then use node affinity to prevent our pods from being placed on their nodes.
+
+#### Multi Container Pods
+- Created together, destroyed together to share the same lifecycle.
+- They have access to each other through localhost and they have access to the same storage volumes
+
+- Design Patterns
+  1. SideCar Pattern - Log agent
+  2. Adapter Pattern - Centralized agent to convert the messages to a common format
+  3. Ambassador Pattern - Choosing the correct database but being able to use localhost throughout the application code
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: simple-webapp
+    image: simple-webapp
+    ports:
+    - containerPort: 8080
+  - name: log-agent
+    image: log-agent
+```
+
+##### Questions - Multi Container Pods
+```cmd
+- Identify the number of containers created in the red pod?
+kubectl describe pod red
+
+- Inspect the app pod and identify the number of containers in it. It is deployed in the elastic-stack namespace?
+kubectl describe pod app -n elastic-stack
+
+- The application outputs logs to the file /log/app.log. View the logs and try to identify the user having issues with Login?
+kubectl logs app
+```
