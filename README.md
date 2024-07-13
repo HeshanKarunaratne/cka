@@ -939,3 +939,113 @@ kubectl describe pod app -n elastic-stack
 - The application outputs logs to the file /log/app.log. View the logs and try to identify the user having issues with Login?
 kubectl logs app
 ```
+
+#### InitContainers
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+  initContainers:
+  - name: init-myservice
+    image: busybox
+    command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ;']
+```
+
+##### Questions - InitContainers
+```cmd
+- Identify the pod that has an initContainer configured.
+kubectl describe pod blue
+```
+
+#### Readiness and Liveness Probes
+- Pod status can be from Pending, ContainerCreating and Running
+- We need to tie the ready condition to the actual state of the application inside the container
+
+- Readiness Probes
+  1. HTTP Test - Testing an API
+
+  ```yml
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+  ```
+
+  2. TCP Test - Testing a port available
+
+  ```yml
+  readinessProbe:
+    tcpSocket:
+      port: 3306
+  ```
+
+  3. Exec Command - Running a script inside the container
+
+  ```yml
+  readinessProbe:
+    exec:
+      command: ["cat", "/app/is_ready"]
+  ```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: myapp
+    ports:
+    - containerPort: 8080
+    readinessProbe:
+      httpGet:
+        path: /api/ready
+        port: 8080
+```
+
+- Liveness Probes
+- What if the container is up, but due to a bug application is stuck in an infinite loop and hence not working.
+- Liveness probe can be configured on the container to periodically test whether the application within the contianer is actually healthy. If the test fails, the container is considered unhealthy and destryed and recreated.
+
+  1. HTTP Test - Testing an API
+
+  ```yml
+  livenessProbe:
+    httpGet:
+      path: /api/ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+  ```
+
+  2. TCP Test - Testing a port available
+
+  ```yml
+  livenessProbe:
+    tcpSocket:
+      port: 3306
+  ```
+
+  3. Exec Command - Running a script inside the container
+
+  ```yml
+  livenessProbe:
+    exec:
+      command: ["cat", "/app/is_ready"]
+  ```
