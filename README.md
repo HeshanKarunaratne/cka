@@ -1049,3 +1049,28 @@ spec:
     exec:
       command: ["cat", "/app/is_ready"]
   ```
+
+#### Logging
+
+```cmd
+- Create a pod
+kubectl create -f event-simulator.yml
+
+- Trail the logs
+kubectl logs -f event-simulator-pod
+
+- When there are multiple containers
+kubectl logs -f event-simulator-pod image-processor
+```
+
+#### Monitoring- Metrics Server
+- You can have 1 metrics server per kubernetes cluster
+- Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory
+- Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server
+- Kubelet contains a sub component known as cAdvisor or Container Advisor
+- CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server
+
+```cmd
+- Run below command to run metrics server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
