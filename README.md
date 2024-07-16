@@ -1074,3 +1074,57 @@ kubectl logs -f event-simulator-pod image-processor
 - Run below command to run metrics server
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
+
+##### Questions - Monitoring
+```cmd
+- Identify the node that consumes the most Memory(bytes).
+kubectl top node
+```
+
+#### Labels, Selectors and Annotations
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: App1
+    function: Front-end
+spec:
+  containers:
+  - name: myapp-container
+    image: myapp
+    ports:
+    - containerPort: 8080
+```
+
+```cmd
+- Getting all the pods with specific label
+kubectl get pods --selector app=App1
+```
+
+```yml
+apiVersion: v1
+kind: ReplicaSet
+metadata: 
+  name: myapp-rs
+  labels: 
+    app: App1
+    function: Front-end
+spec: 
+  selector:
+    matchLabels:
+      app: App1
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        app: App1
+        function: Front-end
+    spec:
+      containers:
+        - name: nginx-container
+          image: nginx
+  replicas: 3
+```
