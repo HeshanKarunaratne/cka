@@ -1128,3 +1128,69 @@ spec:
           image: nginx
   replicas: 3
 ```
+
+##### Questions - Labels, Selectors and Annotations
+```cmd
+- We have deployed a number of PODs. They are labelled with tier, env and bu. How many PODs exist in the dev environment (env)?
+kubectl get pods --selector env=dev
+
+- How many PODs are in the finance business unit (bu)?
+kubectl get pods --selector bu=finance
+
+- How many objects are in the prod environment including PODs, ReplicaSets and any other objects?
+kubectl get all --selector env=prod
+
+- Identify the POD which is part of the prod environment, the finance BU and of frontend tier?
+kubectl get pods --selector env=prod,bu=finance,tier=frontend
+```
+
+#### Rolling Updates and RollBacks
+- When you created a deployment a new rollout is triggered with a new revision number
+- 2 strategies
+  1. Recreate: Destroys all the older pods and create new pods
+  2. Rolling update: default, take down older version and bring up a newer version one by one
+```cmd
+- Check the status of a rollout
+kubectl rollout status $deployment_name
+
+- Show the history of the revisions
+kubectl rollout history $deployment_name
+
+kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1
+
+- Rollback to previous revision
+kubectl rollout undo $deployment_name
+```
+
+##### Updates and Rollbacks
+```cmd
+- Create a nginx deployment with 3 replicas
+kubectl create deployment nginx --image=nginx --replicas=3 --dry-run=client -o yaml > mydeployment.yml
+
+- Apply the deployment
+kubectl apply -f mydeployment.yml --record
+
+- Check the status of the deployment
+kubectl rollout status deployment/nginx
+
+- Check the history of revisions
+kubectl rollout history deployment/nginx
+
+- Delete the deployment
+kubectl delete deployment nginx
+
+- Changing the version using set image
+kubectl set image deployment/nginx nginx=ngnix:1.12
+
+- Rollback to previous revision
+kubectl rollout undo deployment/nginx
+```
+
+##### Questions - Updates and Rollbacks
+```cmd
+- What container image is used to deploy the applications?
+kubectl describe deployment frontend
+
+- Upgrade the application by setting the image on the deployment to kodekloud/webapp-color:v2
+kubectl set image deployment/frontend simple-webapp=kodekloud/webapp-color:v2
+```
