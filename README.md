@@ -1194,3 +1194,184 @@ kubectl describe deployment frontend
 - Upgrade the application by setting the image on the deployment to kodekloud/webapp-color:v2
 kubectl set image deployment/frontend simple-webapp=kodekloud/webapp-color:v2
 ```
+
+#### Jobs
+
+- To stop the pod from restarting after exiting
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: math-pod
+spec: 
+  containers:
+    - name: math-add
+      image: ubuntu
+      command: ["expr", "3", "+", "2"]
+  restartPolicy: Never
+```
+
+- Job definition file
+```yml
+apiVersion: batch/v1
+kind: Job
+metadata: 
+  name: math-add-job
+spec:
+  completions: 3
+  parallelism: 3
+  template:
+    spec: 
+      containers:
+        - name: math-add
+          image: ubuntu
+          command: ["expr", "3", "+", "2"]
+      restartPolicy: Never
+```
+
+```cmd
+kubectl get jobs
+kubectl get pods
+kubectl logs $pod_name
+kubectl delete job $pod_name
+```
+
+#### CronJobs
+
+```yml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata: 
+  name: report-cron-job
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      completions: 3
+      parallelism: 3
+      template:
+        spec: 
+          containers:
+            - name: math-add
+              image: ubuntu
+              command: ["expr", "3", "+", "2"]
+          restartPolicy: Never
+```
+
+##### Questions - Jobs and CronJobs
+```cmd
+- Let us now schedule that job to run at 21:30 hours every day.
+kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedule='30 21 * * *'
+```
+
+#### Services
+- There are multiple services
+  1. NodePort: Service makes an internal port accessible on a port on the node
+  - There are 3 ports involved in this service
+    1. targetPort - Port on the pod
+    2. port - Port on the service
+    3. nodePort - Port on the node(30000-32767)
+
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: myapp-service
+spec: 
+  type: NodePort
+  ports:
+    - targetPort: 80
+      port: 80
+      nodePort: 30008
+  selector:
+    app: myapp
+    type: front-end
+```
+
+  2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
+
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: myapp-service
+spec: 
+  type: ClusterIP
+  ports:
+    - targetPort: 80
+      port: 80
+  selector:
+    app: myapp
+    type: front-end
+```
+
+  3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
+
+##### Questions - Services
+```cmd
+- How many Services exist on the system?
+kubectl get svc
+
+- What is the targetPort configured on the kubernetes service?
+kubectl describe svc kubernetes
+```
+
+#### Ingress
+- Ingress helps your users access your application using a single external accessible URL that youcan configure to route traffic to different services within your cluster. Can implement SSL security as well
+- We can create ingress resources just like deployments, pods, services etc
+- Ingress controller is not deployed to kubernetes cluster by default
+- ex:
+  1. GCE
+  2. Nginx
+- These ingress controllers are not just another load balancer or nginx server, the load balancer component are just a part of it
+- Ingress controllers have additional intelligence built into them to monitor the kubernetes cluster for new definitions or ingress resources
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear-watch
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx-example
+  rules:
+  - http:
+      paths:
+      - path: /wear
+        pathType: Prefix
+        backend:
+          service:
+            name: wear-service
+            port:
+              number: 80
+      - path: /watch
+        pathType: Prefix
+        backend:
+          service:
+            name: watch-service
+            port:
+              number: 80
+```
+
+```cmd
+kubectl create -f ingress-wear.yml
+kubectl get ingress
+kubectl describe ingress $ingress_name
+kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80" --dry-run=client -o yaml > ingress.yml
+```
+
+##### Questions - Ingress Networking 1
+```cmd
+- Which namespace is the Ingress Controller deployed in?
+kubectl get all -A
+
+- Which namespace are the applications deployed in?
+kubectl describe deploy ingress-nginx-controller --namespace ingress-nginx
+
+- What is the name of the Ingress Resource?
+kubectl get ingress --namespace app-space
+
+- A new payment service has been introduced. Since it is critical, the new application is deployed in its own namespace.
+ kubectl get svc -A -o wide
+```
