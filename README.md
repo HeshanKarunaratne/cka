@@ -1374,4 +1374,26 @@ kubectl get ingress --namespace app-space
 
 - A new payment service has been introduced. Since it is critical, the new application is deployed in its own namespace.
  kubectl get svc -A -o wide
+
+- You are requested to make the new application available at /pay.
+kubectl create ingress ingress-pay -n critical-space --rule="/pay=pay-service:8282"
+```
+
+##### Questions - Ingress Networking 2
+```cmd
+- We have deployed two applications. Explore the setup.
+kubectl get all -A
+
+Let us now deploy an Ingress Controller. First, create a namespace called ingress-nginx
+kubectl create namespace ingress-nginx
+
+- The NGINX Ingress Controller requires a ConfigMap object. Create a ConfigMap object with name ingress-nginx-controller in the ingress-nginx namespace.
+kubectl create configmap ingress-nginx-controller -n ingress-nginx
+
+- The NGINX Ingress Controller requires two ServiceAccounts. Create both ServiceAccount with name ingress-nginx and ingress-nginx-admission in the ingress-nginx namespace.
+kubectl create serviceaccount ingress-nginx -n ingress-nginx
+kubectl create serviceaccount ingress-nginx-admission -n ingress-nginx
+
+- Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
+kubectl create ingress ingress-wear-watch -n app-space --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"
 ```
