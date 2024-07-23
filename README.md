@@ -1397,3 +1397,86 @@ kubectl create serviceaccount ingress-nginx-admission -n ingress-nginx
 - Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
 kubectl create ingress ingress-wear-watch -n app-space --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"
 ```
+
+#### Network Policies
+- All the pods inside the kubernetes cluster can communicate with each other
+- We can use a network policy to allow/deny communication with each other
+- Below definition is for the db-pod to allow traffic from api-pod through port 3306
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-policy
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod
+      namespaceSelector:
+        matchLabels:
+          name: prod
+    - ipBlock:
+        cidr: 192.168.5.10/32
+    ports:
+    - protocol: TCP
+      port: 3306
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 192.168.5.10/32
+    ports:
+    - protocol: TCP
+      port: 80  
+```
+- In above yml we add a network policy and use labels and selectors to associate the policy with the pods.
+- `role: db` are the labels to match the database pods
+- We need to make sure only api-pod can communicate to db-pod but only through port 3306
+- If we haven't specify a policy type this wont deny traffic to those pods, for that policyTypes is mandatory
+- Once you allow ingress traffic you dont need to specify a separate rule for egress traffic as well
+- You only need to add the traffic which is originating from source to target
+
+##### Questions - Network Policies
+```cmd
+- What is the name of the Network Policy?
+kubectl get networkpolicies
+
+- Create a network policy to allow traffic from the Internal application only to the payroll-service and db-service? Policy Name internal-policy;Policy Type: Egress;Egress Allow: payroll;ayroll Port: 8080;Egress Allow: mysql;MySQL Port: 3306
+kubectl apply -f internal.yml
+```
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: internal-policy
+spec:
+  podSelector:
+    matchLabels:
+      name: internal
+  policyTypes:
+  - Egress
+  - Ingress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          name: payroll
+    ports:
+    - port: 8080
+      protocol: TCP
+  - to:
+    - podSelector:
+        matchLabels:
+          name: mysql
+    ports:
+    - port: 3306
+      protocol: TCP
+```
