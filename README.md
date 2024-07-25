@@ -1480,3 +1480,28 @@ spec:
     - port: 3306
       protocol: TCP
 ```
+
+#### Volumes & Mounts
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: random-number-generator
+spec:
+  containers:
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh", "-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    
+    volumeMounts:
+    - mountPAth: /opt
+      name: data-volume
+      
+  volumes:
+  - name: data-volume
+    hostPath:
+      path: /data
+      type: Directory
+```
