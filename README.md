@@ -1505,3 +1505,40 @@ spec:
       path: /data
       type: Directory
 ```
+
+#### Persistent Volumes
+
+```yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-vol1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /tmp/data
+```
+
+```cmd
+kubectl create -f pv-definition.yml
+kubectl get persistentvolume
+```
+
+#### Persisten Volume Claims
+
+- Every Persistent Volume Claim is bound to a single Persistent Volume(1:1)
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myClaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
