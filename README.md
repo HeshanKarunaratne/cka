@@ -1542,3 +1542,38 @@ spec:
     requests:
       storage: 500Mi
 ```
+
+#### Storage Classes
+- Static provisioning
+  - Before creating any Persistent Volume we need to manually create the relevant disk 
+- Dynamic provisioning
+  - Volume gets provisioned automatically when the application needs it. You can use Storage classes for this
+
+```yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: google-storage
+provisioner: kubernetes.io/
+```
+
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myClaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: google-storage
+  resources:
+    requests:
+      storage: 500Mi
+```
+
+##### Questions - Storage Class
+```cmd
+- How many StorageClasses exist in the cluster right now?
+kubectl get sc
+
+```
