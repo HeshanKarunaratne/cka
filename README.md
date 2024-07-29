@@ -1571,9 +1571,30 @@ spec:
       storage: 500Mi
 ```
 
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: random-number-generator
+spec:
+  containers:
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh", "-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    
+    volumeMounts:
+    - mountPAth: /opt
+      name: data-volume
+      
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: myClaim
+```
+
 ##### Questions - Storage Class
 ```cmd
 - How many StorageClasses exist in the cluster right now?
 kubectl get sc
-
 ```
