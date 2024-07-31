@@ -1598,3 +1598,81 @@ spec:
 - How many StorageClasses exist in the cluster right now?
 kubectl get sc
 ```
+
+#### Stateful Sets
+- If the instances need a particular order and a name you can use statefulsets
+- podManagementPolicy: Parallel: add this to make the statefulset not follow the ordered approach(default value is OrderedReady)
+```yml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: mysql
+  labels: 
+    app: mysql
+spec: 
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: mysql-h
+  podManagementPolicy: Parallel
+```
+
+```cmd
+kubectl create -f statefulset-definition.yml
+kubectl scale statefulset mysql --replicase=5
+kubectl scale statefulset mysql --replicase=3
+kubectl delete statefulset mysql
+```
+
+#### Headless Services
+
+- We create a service so that the web application can talk to database server using the service and all the requests are load balanced across all the database pods in the deployment.
+- We need a service that doesnt load balance requests but gives us a DNS entry to reach each pod. Thats a headless service.
+- When you create a headless service all the DNS names are created in following manner
+  - eg: podname.headless-servicename.namespace.svc.cluster.local
+        mysql-0.mysql-h.default.svc.cluster.local -> master
+        mysql-1.mysql-h.default.svc.cluster.local -> slave1
+        mysql-2.mysql-h.default.svc.cluster.local -> slave2
+        
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-h
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+```
+
+- You must define subdomain value to the name of the service name, so that it will create DNS entries for the name of the service to point to the pod
+- To create A records you need to specify hostname
+- By default in a deployment file, if there are no values for subdomain and hostname, a headless service will not create A record for the pod
+- If we add the pod defintion in a deployment all the pods will get the same A record mysql-pod.mysql-h.default.svc.cluster.local and this will not help us to meet of addressing the pods separately
+- To overcome the issue we can use the StatefulSet and we need to explicitly define the serviceName so that it can identify the headless service
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: mysql
+spec:
+  containers:
+  - name: mysql
+    image: mysql
+  subdomain: mysql-h
+  hostname: mysql-pod
+```
