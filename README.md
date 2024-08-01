@@ -1676,3 +1676,9 @@ spec:
   subdomain: mysql-h
   hostname: mysql-pod
 ```
+
+#### Storage and StatefulSet
+- If we need underlying all pods to share the same database storage we can do that. But for each pod to have a seaparate storage? 
+- Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SC
+- Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulset-definition
+- StatefulSets doesnt automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees statusful storage for pods
