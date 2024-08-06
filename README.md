@@ -1682,3 +1682,59 @@ spec:
 - Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SC
 - Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulset-definition
 - StatefulSets doesnt automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees statusful storage for pods
+
+
+#### Dockerfile
+- Dockerfile contains instructions and arguments
+
+```Dockerfile
+FROM ubuntu
+
+RUN apt-get update
+RUN apt-get install python
+
+RUN pip install flask
+RUN pip install flask-mysql
+
+COPY . /opt/source-code
+
+ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
+```
+
+##### Questions - Docker images
+```cmd
+- Build a docker image using the Dockerfile and name it webapp-color. No tag to be specified?
+docker build -t webapp-color .
+
+- What is the base Operating System used by the python:3.6 image?
+docker history python:3.6
+```
+
+#### Authentication and Authorization
+- kube-apiserver is at the center of all opearions within kubernetes.
+- We need to see who can access the api-server and what can they do
+- We can access using
+  1. Username and Passwords
+  2. Username and Tokens
+  3. Certificates
+  4. LDAP Authentication providers
+  5. Service Accounts
+
+- Authroization is implemented using
+  1. RBAC Authorizarion
+  2. ABAC Authorization
+  3. Node Authorization
+  4. Webhook mode
+
+#### Authentication
+- Mainly Users(Admins and Developers) and ServiceAccounts
+- All user access is managed by the API server
+- Whether you are accessing the cluster through kubectl tool or the API directly all these requests go through the kube-apiserver and it authenticates the requests before processing it
+
+1. Username Password mechanism
+- Create a user-details.csv where you have a list of users with their password, name and userid
+- Add it to kube-apiserver.service file as below `--basic-auth-file=user-details.csv`
+
+2. User Token mechanism
+- Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid
+- Add it to kube-apiserver.service file as below `--token-auth-file=user-token-details.csv`
