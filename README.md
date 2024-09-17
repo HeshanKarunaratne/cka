@@ -1738,3 +1738,58 @@ docker history python:3.6
 2. User Token mechanism
 - Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid
 - Add it to kube-apiserver.service file as below `--token-auth-file=user-token-details.csv`
+
+#### KubeConfig
+
+```cmd
+kubectl get pods 
+                --server $server_address 
+                --client-key admin.key 
+                --client-certificate admin.crt 
+                --certificate-authority ca.crt
+```
+- Typing these commands everytime is a tedious task, so we move these to a configuration file called kubeconfig
+
+```cmd
+kubectl get pods --kubeconfig config
+
+// View the current config
+kubectl config view
+
+// View the given config
+kubectl config view --kubeconfig=my-custom-config
+
+// Change the current context
+kubectl config use-context user@prod 
+```
+
+- If you create the config file in $HOME/.kube/config location(which is the default path for the config file) you dont need to explicitly add the --kubeconfig config in above command as well
+- config file has 3 sections
+  - clusters - varies k8s clusters that you have access to (in above --server)
+  - Users - User accounts which have access to these clusters (in above except --server belongs to here)
+  - Contexts - Binds which user account is avaiable for which cluster
+
+```yml
+apiVersion: v1
+kind: Config
+
+current-context: my-kube-admin@my-kube-playground
+
+clusters:
+- name: my-kube-playground
+  cluster:
+    certificate-authority: ca.crt
+    server: https://my-kube-playground:6443
+
+contexts:
+- name: my-kube-admin@my-kube-playground
+  context:
+    cluster: my-kube-playground
+    user: my-kube-admin
+
+users:
+- name: my-kube-admin
+  user:
+    client-certificate: admin.crt
+    client-key: admin.key
+```
