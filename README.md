@@ -1793,3 +1793,40 @@ users:
     client-certificate: admin.crt
     client-key: admin.key
 ```
+
+##### Questions - KubeConfig
+```cmd
+- Where is the default kubeconfig file located in the current environment?
+$HOME/.kube/config
+
+- How many clusters are defined in the default kubeconfig file?
+kubectl config view
+
+- A new kubeconfig file named my-kube-config is created. It is placed in the /root directory. How many clusters are defined in that kubeconfig file?
+kubectl config view --kubeconfig=my-kube-config
+
+- I would like to use the dev-user to access test-cluster-1. Set the current context to the right one so I can do that?
+kubectl config --kubeconfig=my-kube-config use-context research
+```
+
+#### API Groups
+- APIs are categorized into 2 groups
+  - Core group: /api
+    - All the core functionality is maintained. 
+      - eg: namespaces, pods, rc, nodes, PV, PVC, configmaps, secrets, services
+  - Named group: /apis
+    - More organized and all the newer features are going to be made available through these named groups
+      - eg: /apps, /extensions, /networking.k8s.io, /storage.k8s.io, /authentication.k8s.io, /certificates.k8s.io
+
+
+```cmd
+curl http://localhost:6443 -k
+
+curl http://localhost:6443/apis -k | grep "name"
+
+kubectl proxy
+// starts a proxy server on port 8001 locally and user credentials and certificates from your kubeconfig file to access the cluster
+
+curl http://localhost:8001 -k
+So the proxy will use the credentials from the kubeconfig file to forward the request to the kube API server
+```
