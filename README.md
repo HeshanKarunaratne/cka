@@ -12,13 +12,19 @@ A cluster is a set of nodes grouped together. This way even if one node fails yo
 Contains
 - kube-apiserver: Acts as the frontend for kubernetes, talks to the api server to interact with the cluster
 - etcd: Distributed key-value store to store all data used to manage the cluster
-- controller: Noticing and responding when nodes, containers or endpoints goes down
-- scheduler: Distributing work or containers across multiple nodes
+- controller: Notices and responds when nodes, containers or endpoints goes down
+- scheduler: Distributing work or containers across multiple nodes, looks for newly created containers and assigns them to nodes
 
 ##### Worker
 Contains
 - kubelet: Is the agent responsible for making sure that the containers are running on the node as expected
 - container runtime: Underline software used to run containers
+
+```cmd
+kubectl run hello-minikube
+kubectl cluster-info
+kubectl get nodes
+```
 
 #### Pods
 Kubernetes does not deploy containers directly on the worker nodes, the containers are encapsulated into a kubernetes object known as a Pod. The containers inside a pod will have access to the same storage, the same network namespace and same fate(created together, destroyed together)
@@ -1830,3 +1836,11 @@ kubectl proxy
 curl http://localhost:8001 -k
 So the proxy will use the credentials from the kubeconfig file to forward the request to the kube API server
 ```
+
+#### Authorization
+- Below are the different way to of authorizing in Kubernetes
+  - Node
+  - ABAC: Attribute Bases Authorization
+    - You need to edit the policy file everytime you need to make change and restart the kube API server
+  - RBAC: Role Based Authorization
+  - Webhook
