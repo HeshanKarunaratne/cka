@@ -29,10 +29,12 @@ kubectl get nodes
 #### Pods
 Kubernetes does not deploy containers directly on the worker nodes, the containers are encapsulated into a kubernetes object known as a Pod. The containers inside a pod will have access to the same storage, the same network namespace and same fate(created together, destroyed together)
 
+- A pod have a one to one relationship with the containers
 - A pod should have mandatory apiVersion, kind, metadata and spec 
 - Metadata is a dictionary and it should have name and labels under it(what kubernetes expect)
 - Labels is also a dictionary and you can have many key value pairs for it
 - Spec is a dictionary and you can place multiple containers inside the container(List/Array element) tag
+
 ```yaml
 apiVersion: v1
 kind: Pod
@@ -63,6 +65,9 @@ kubectl get pods
 - Create a new pod with the nginx image
 kubectl run nginx --image=nginx
 
+- How many pods in default namespace?
+kubectl get pods --namespace default
+
 - What is the image used to create the new pods?
 kubectl describe pod newpods-92tl5
 
@@ -71,9 +76,20 @@ kubectl get pods -o wide
 
 - What images are used in the new webapp pod?
 kubectl describe pod webapp
+And get how many containers are present
+
+- What does the READY column in the output of the kubectl get pods command indicate?
+Running container count/ Total container count
 
 - Delete the webapp Pod
 kubectl delete pod webapp
+
+- Create a new pod with the name redis and the image redis123?
+kubectl run redis --image=redis123 --dry-run=client -o=yaml > redis.yaml
+kubectl apply -f redis.yaml
+
+- Create a pod definition file from a pod?
+kubectl get pod <pod-name> -o yaml > pod-definition.yaml
 ```
 
 #### Replication Controller
