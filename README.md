@@ -158,6 +158,11 @@ kubectl get pods
 kubectl delete replicaset myapp-replicatset
 kubectl describe replicaset
 kubectl delete pod $pod_name
+
+- How to update the defintion.yaml file?
+kubectl replace -f definition.yaml
+kubectl scale --replicas=6 -f definition.yaml
+kubectl scale --replicas=6 <TYPE> <NAME>
 ```
 
 ##### Questions - ReplicaSet
@@ -176,6 +181,9 @@ kubectl delete rs replicaset-1 replicaset-2
 
 - Scale the ReplicaSet to 5 PODs?
 kubectl scale --replicas=5 rs new-replica-set
+
+- Now scale the ReplicaSet down to 2 PODs?
+kubectl edit rs new-replica-set 
 ```
 
 #### Labels and Selectors
@@ -232,6 +240,7 @@ kubectl get deployments
 kubectl get replicasets
 kubectl get pods
 kubectl describe deployment $deployment_name
+kubectl get all
 ```
 
 ##### Questions - Deployment
