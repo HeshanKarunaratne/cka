@@ -256,9 +256,18 @@ kubectl create deployment httpd-frontend --replicas=3 --image=httpd:2.4-alpine
 ```
 
 #### Namespaces
+- Kubernetes creates default, kube-system and kube-public namespaces during startup, so that we wont accidently delete any resources
 ```text
 db-service   . dev       . svc     . cluster.local
 Service Name   Namespace   Service   Domain   
+```
+
+- Create a new namespace
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata: 
+  name: dev
 ```
 
 ```cmd
@@ -266,13 +275,29 @@ Service Name   Namespace   Service   Domain
 kubectl get pods --namespace=kube-system
 
 - Create a namespace
-kubectl create namespace $namespace_name
+kubectl create namespace <NAMESPACE_NAME>
 
-- Set the namespace to 'dev'
+- Set the namespace to 'dev' so that you dont need to specify this in each call
 kubectl config set-context $(kubectl config current-context) --namespace=dev
 
 - Get pods in all the namespaces
 kubectl get pods --all-namespaces
+```
+
+- Create resource quota
+```yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata: 
+  name: compute-quota
+  namespace: dev
+spec:
+  hard:
+    pods: "10"
+    requests.cpu: "4"
+    requests.memory: 5Gi
+    limits.cpu: "10"
+    limits.memory: 10Gi
 ```
 
 ##### Questions - Namespaces
@@ -287,8 +312,14 @@ kubectl get pods --namespace=research
 kubectl run redis --image=redis --namespace=finance
 
 - Which namespace has the blue pod in it?
-kubectl get pods --namespace=marketing
 kubectl get pods --all-namespaces
+kubectl get pods -A
+
+- What DNS name should the Blue application use to access the database db-service in its own namespace?
+Use the service name
+
+- What DNS name should the Blue application use to access the database db-service in the dev namespace?
+db-service.dev.svc.cluster.local
 ```
 
 ```yml
