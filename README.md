@@ -382,6 +382,62 @@ kubectl create deployment redis-deploy --namespace=dev-ns --image=redis --replic
 kubectl run httpd --image=httpd:alpine --port=80 --expose=true
 ```
 
+#### Commands and Arguments
+- When you execute `docker run ubuntu` and execute `docker ps -a` you can see the container in an exited state. The container only lives as the process inside it is alive. Containers are not meant to host an operating system. Containers are meant to run a specific task or a process.
+
+```cmd
+- Container exists after creation
+docker run ubuntu
+
+- Container sleeps for 5 seconds and then exists
+docker run ubuntu sleep 5
+```
+- You can use the ENTRYPOINT to pass an Argument to the docker compose file
+
+```Dockerfile
+FROM ubuntu
+ENTRYPOINT ["sleep"]
+```
+
+```cmd
+docker run ubuntu-sleeper 10
+```
+
+- If you dont specify any arguments in `docker run` command how to make sure to add a default value in the docker compose file itself
+
+```Dockerfile
+FROM ubuntu
+ENTRYPOINT ["sleep"]
+CMD ["5"]
+```
+
+- In Kubernetes world there are 2 fields that correspond to two instructions in the docker file
+1. command field overrides ENTRYPOINT instruction
+2. args field overrides CMD instruction
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    command: ["sleep2.0"]
+    args: ["10"]
+```
+
+#### Commands and Arguments - Questions
+
+```cmd
+- What is the command used to run the pod ubuntu-sleeper?
+kubectl describe pod ubuntu-sleeper
+
+- Create a pod with given specification. Pod Name: webapp-green, Image: kodekloud/webapp-color, Command line arguments: --color=green
+kubectl run webapp-green --image=kodekloud/webapp-color -- --color green
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
