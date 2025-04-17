@@ -438,6 +438,52 @@ kubectl describe pod ubuntu-sleeper
 kubectl run webapp-green --image=kodekloud/webapp-color -- --color green
 ```
 
+#### ENV Variables in K8s
+
+```cmd
+docker run -e APP_COLOR=pink simple-webapp-color
+```
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: simple-webapp-color
+spec: 
+  containers:
+  - name: simple-webapp-color
+    image: simple-webapp-color
+    ports:
+      - containerPort: 8080
+    env:
+      - name: APP_COLOR
+        value: pink
+```
+
+- ENV value types
+  1. Plain key value
+  ```yaml
+  env:
+    - name: APP_COLOR
+      value: pink
+  ```
+
+  2. ConfigMaps
+  ```yaml
+  env:
+    - name: APP_COLOR
+      valueFrom:
+        configMapKeyRef:
+  ```
+
+  3. Secrets
+  ```yaml
+  env:
+    - name: APP_COLOR
+      valueFrom:
+        secretKeyRef:
+  ```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
