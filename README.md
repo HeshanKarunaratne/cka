@@ -484,6 +484,89 @@ spec:
         secretKeyRef:
   ```
 
+#### ConfigMaps
+We can take all the env specific data out of the pod definition file and manage it centrally using configuration maps (ConfigMaps). There are 2 phases involved in configuring ConfigMaps. 
+  1. Create the ConfigMaps
+  2. Inject the ConfigMaps to pod definition file
+
+
+```cmd
+- Create a config map in Imperative way from literal
+kubectl create configmap <CONFIG_NAME> --from-literal=<KEY>=<VALUE>
+kubectl create configmap app-config --from-literal=APP_COLOR=blue
+
+- Create a config map in Imperative way from file
+kubectl create configmap <CONFIG_NAME> --from-file=<PATH_TO_FILE>
+kubectl create configmap app-config --from-file=app_config.properties
+
+- View ConfigMaps
+kubectl get cm
+
+- Describe ConfigMaps
+kubectl describe cm <CONFIG_MAP_NAME>
+```
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata: 
+  name: app-config
+data:
+  APP_COLOR: blue
+  APP_MODE: prod
+```
+
+```cmd
+kubectl create -f config-map.yaml
+```
+
+- Injecting whole configmap to the pod
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    envFrom:
+    - configMapRef:
+      name: app-config
+```
+- Injecting as a single key value
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: ubuntu-sleeper-pod
+spec: 
+  containers:
+  - name: ubuntu-sleeper
+    image: ubuntu-sleeper
+    env:
+    - name: APP_COLOR
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_COLOR
+```
+
+##### Questions - ConfigMaps
+```cmd
+- What is the environment variable name set on the container in the pod?
+kubectl describe pod webapp-color
+
+- How many ConfigMaps exists in the default namespace?
+kubectl get configmaps
+
+- Identify the database host from the config map db-config?
+kubectl describe configmap db-config
+
+- Create a configmap?
+kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue --from-literal=APP_OTHER=disregard
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -701,72 +784,6 @@ spec:
     env:
     - name: APP_COLOR
       value: red
-```
-
-#### ConfigMaps
-
-```cmd
-kubectl create configmap $config_name --from-literal=APP_COLOR=blue
-kubectl create configmap $config_name --from-file=<path-to-file>
-kubectl get configmaps
-kubectl describe configmaps
-```
-
-```yml
-apiVersion: v1
-kind: ConfigMap
-metadata: 
-  name: app-config
-data:
-  APP_COLOR: blue
-  APP_MODE: prod
-```
-
-- Whole configmap
-```yml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: ubuntu-sleeper-pod
-spec: 
-  containers:
-  - name: ubuntu-sleeper
-    image: ubuntu-sleeper
-    envFrom:
-    - configMapRef:
-      name: app-config
-```
-- Single key value
-```yml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: ubuntu-sleeper-pod
-spec: 
-  containers:
-  - name: ubuntu-sleeper
-    image: ubuntu-sleeper
-    env:
-    - name: APP_COLOR
-      valueFrom:
-        configMapKeyRef:
-          name: app-config
-          key: APP_COLOR
-```
-
-##### Questions - ConfigMaps
-```cmd
-- What is the environment variable name set on the container in the pod?
-kubectl describe pod webapp-color
-
-- How many ConfigMaps exists in the default namespace?
-kubectl get configmaps
-
-- Identify the database host from the config map db-config?
-kubectl describe configmap db-config
-
-- Create a configmap?
-kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue --from-literal=APP_OTHER=disregard
 ```
 
 #### Secrets
