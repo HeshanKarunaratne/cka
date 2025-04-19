@@ -651,8 +651,44 @@ kubectl get secrets
 kubectl get secret dashboard-token
 
 - The reason the application is failed is because we have not created the secrets yet. Create a new secret named db-secret with the data given below. Name: db-secret; DB_Host=sql01; DB_User=root; DB_Password=password123
-kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --
-from-literal=DB_Password=password123
+kubectl create secret generic db-secret --from-literal=DB_Host=sql01 --from-literal=DB_User=root --from-literal=DB_Password=password123
+```
+
+#### Encrypting secret data at REST
+```cmd
+- Create a secret object
+kubectl create secret generic my-secret --from-literal=key1=supersecret
+
+- Check the created secret
+kubectl get secret my-secret -o yaml
+
+- Anyone can decode and see the secret
+echo -n 'c3VwZXJzZWNyZXQ=' | base64 --decode
+
+- Install etcdctl
+apt-get install etcd-client
+
+- Still you can see the secret value in plain text in etcd, thats why we need to encrypt it
+ETCDCTL_API=3 etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get /registry/secrets/default/my-secret | hexdump -C
+
+- So we need to enable Encryption at REST to mitigate the problem. Navigate to kube-apiserver and check whether encryption at REST is enabled (make sure --encryption-provider-config is in the list enabled)
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+
+- Create a configuration file as below and pass it as an option to the kube-apiserver.yaml file. You may need to add a volume and a volumeMount. After enabling this you can confirm that Encryption is enabled at REST. Any secret created before encryption will not be encrypted.
+```
+
+```yml
+apiVersion: apiserver.config.k8s.io/v1
+kind: EncryptionConfiguration
+resources:
+  - resources:
+      - secrets
+    providers:
+      - aescbc:
+          keys:
+            - name: key1
+              secret: <BASE64_ENCODED_SECRET>
+      - identity: {}
 ```
 
 #### Updates and Rollbacks
@@ -780,117 +816,6 @@ kubectl run nginx --image nginx
 
 - Check created pod
 kubectl describe pods nginx
-```
-
-#### Docker CMD and ENTRYPOINT
-- If you use a command with CMD it is hard coded, so will get the same output again and again
-- To pass variable from command line use ENTRYPOINT
-- Use ENTRYPOINT to pass value and CMD to keep a default value
-
-```dockerfile
-FROM ubuntu
-ENTRYPOINT ["sleep"]
-CMD ["5"]
-```
-
-```cmd
-docker run --name ubuntu-sleeper ubuntu-sleeper 10
-```
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: ubuntu-sleeper-pod
-spec: 
-  containers:
-  - name: ubuntu-sleeper
-    image: ubuntu-sleeper
-    command: ["sleep2.0"]
-    args: ["5"]
-```
-
-- DOCKER     | KUBERNETES
-- ENTRYPOINT | command
-- CMD        | args
-
-#### Questions - Test Commands and Arguments
-```text
-- Inspect the two files under directory webapp-color-3. What command is run at container startup?
-
-- Dockerfile
-FROM python:3.6-alpine
-RUN pip install flask
-COPY . /opt/
-EXPOSE 8080
-WORKDIR /opt
-ENTRYPOINT ["python", "app.py"]
-CMD ["--color", "red"]
-
-- webapp-pod.yml
-apiVersion: v1 
-kind: Pod 
-metadata:
-  name: webapp-green
-  labels:
-      name: webapp-green 
-spec:
-  containers:
-  - name: simple-webapp
-    image: kodekloud/webapp-color
-    command: ["--color","green"]
-
---color green
-
-- Create a pod with the given specifications. By default it displays a blue background. Set the given command line arguments to change it to green
-kubectl run webapp-green --image=kodekloud/webapp-color -- --color green
-
-apiVersion: v1
-kind: Pod
-metadata:
-  labels:
-    run: webapp-green
-  name: webapp-green
-spec:
-  containers:
-  - image: kodekloud/webapp-color
-    name: webapp-green
-    args: ["--color", "green"]
-```
-
-#### Environement variables
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: ubuntu-sleeper-pod
-spec: 
-  containers:
-  - name: ubuntu-sleeper
-    image: ubuntu-sleeper
-    env:
-    - name: APP_COLOR
-      value: red
-```
-
-#### Encrypting secret data at REST
-```cmd
-- Create a secret
-kubectl create secret generic my-secret --from-literal=key1=supersecret
-
-- Check the created secret
-kubectl get secret my-secret -o yaml
-
-- Decode and see the secret(anyone have access to do this)
-echo -n 'c3VwZXJzZWNyZXQ=' | base64 --decode
-
-- Install etcdctl
-apt-get install etcd-client
-
-- Still you can see the secret value in plain text in etcd, thats why we need to encrypt it
-ETCDCTL_API=3 etcdctl --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key get /registry/secrets/default/my-secret | hexdump -C
-
 ```
 
 #### Container Security
