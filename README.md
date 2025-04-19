@@ -691,6 +691,71 @@ resources:
       - identity: {}
 ```
 
+#### Docker Securtiy
+By default Docker runs a container with a limited set of capabilities. And so the
+processes running within the container do not have the privileges. In case you wish to override this behavior and enable all privileges to the container use the privileged flag
+
+```cmd
+- Instead of root user process will be executed by user 1001
+docker run --user=1001 ubuntu sleep 3600
+
+- Add a privilege to the container running on the host
+docker run --cap-add MAC_ADMIN ubuntu
+
+- Remove a privilege to the container running on the host
+docker run --cap-drop MAC_ADMIN ubuntu
+
+- Run a container with all the priviledges
+docker run --priviledged ubuntu
+```
+
+#### Securtiy Contexts
+
+- POD level security: If you configure it at a POD level, the settings will carry over to
+all the containers within the POD. If you configure it at both the POD and the Container, the settings on the container will override the settings on the POD.
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  securityContext:
+    runAsUser: 1000
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      commands: ["sleep", "3000"]
+```
+
+- Container level security: Capabilities are only applicable at container level and not at the POD level
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web-pod
+spec:
+  containers:
+    - name: ubuntu
+      image: ubuntu
+      commands: ["sleep", "3000"]
+      securityContext:
+        runAsUser: 1000
+        capabilities:
+          add: ["MAC_ADMIN"]
+```
+
+##### Questions - Security Contexts
+```cmd
+- What is the user used to execute the sleep process within the ubuntu-sleeper pod?
+kubectl exec ubuntu-sleeper -- whoami
+
+- Edit the pod ubuntu-sleeper to run the sleep process with user ID 1010?
+kubectl edit pod ubuntu-sleeper
+kubectl replace --force -f <PATH_TO_TEMP_FILE>
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -816,56 +881,6 @@ kubectl run nginx --image nginx
 
 - Check created pod
 kubectl describe pods nginx
-```
-
-#### Container Security
-```cmd
-docker run --user=1001 ubuntu sleep 3600
-docker run --cap-add MAC_ADMIN ubuntu
-docker run --cap-drop MAC_ADMIN ubuntu
-```
-
-- Pod level security
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: web-pod
-spec:
-  securityContext:
-    runAsUser: 1000
-  containers:
-    - name: ubuntu
-      image: ubuntu
-      commands: ["sleep", "3000"]
-```
-
-- Container level security: Capabilities are only applicable at container level
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: web-pod
-spec:
-  containers:
-    - name: ubuntu
-      image: ubuntu
-      commands: ["sleep", "3000"]
-      securityContext:
-        runAsUser: 1000
-        capabilities:
-          add: ["MAC_ADMIN"]
-```
-
-##### Questions - Security Contexts
-```cmd
-- What is the user used to execute the sleep process within the ubuntu-sleeper pod?
-kubectl edit pod ubuntu-sleeper
-kubectl exec ubuntu-sleeper -- whoami
-
-- How to replace a pod without deleting it
-kubectl replace --force -f /tmp/kubectl-edit-3136779847.yaml
-kubectl exec ubuntu-sleeper -- whoami
 ```
 
 #### Service Accounts
