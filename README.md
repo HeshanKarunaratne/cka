@@ -821,6 +821,50 @@ kubectl edit deployment web-dashboard
 serviceAccountName: dashboard-sa
 ```
 
+#### Resource Requirements
+- If there is no sufficient resources available on any of the nodes, Kubernetes holds
+back scheduling the POD, and you will see the POD in a pending state
+- Kubernetes assumes that a Pod or a container within a pod requires 0.5 CPU and 256 mebibyte(Mi) of memory
+- Limits and requests are set to each container within the pod
+- When a pod tries to exceed resources beyond its specified limit
+  - CPU: Kubernetes throttles
+  - Memory: A container can use more memory than its limit, but if the container tries to consume more memory than its limit constantly the pod will be terminated
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-kubernetes-dashboard
+spec:
+  containers:
+    - name: my-dashboard
+      image: my-dashboard
+      ports:
+      - containerPort: 8080
+      resources:
+        requests:
+          memory: "1Gi"
+          cpu: 1
+        limits:
+          memory: "2Gi"
+          cpu: 2
+```
+
+#### Questions - Resource Limits
+```cmd
+- A pod called rabbit is deployed. Identify the CPU requirements set on the Pod
+kubectl describe pod rabbit
+
+- Delete the rabbit Pod.
+kubectl delete pod rabbit
+
+- Another pod called elephant has been deployed in the default namespace. It fails to get to a running state. Inspect this pod and identify the Reason why it is not running.
+kubectl get pods -o wide
+
+- The elephant pod runs a process that consumes 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
+kubectl replace --force -f elephant.yaml
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -929,38 +973,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Resource Requirements
-- Kubernetes assumes that a Pod or a container within a pod requires 0.5 CPU and 256 mebibyte(Mi) of memory.
-- Limits and requests are set to each container within the pod
-- When a pod tries to exceed resources beyond its specified limit
-  - CPU: Kubernetes throttles
-  - Memory: A container can use more memory than its limit, but if the container tries to consume more memory than its limit constantly the pod will be terminated
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-kubernetes-dashboard
-spec:
-  containers:
-    - name: my-dashboard
-      image: my-dashboard
-      ports:
-      - containerPort: 8080
-      resources:
-        requests:
-          memory: "1Gi"
-          cpu: 1
-        limits:
-          memory: "2Gi"
-          cpu: 2
-```
-
-##### Questions - Resource Limits
-```cmd
-- A pod called rabbit is deployed. Identify the CPU requirements set on the Pod
-kubectl describe pod rabbit
-```
 
 #### Taints and Tolerations
 - Taints and Toleration are used to set restrictions on what pods can be scheduled on a node
