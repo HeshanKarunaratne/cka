@@ -756,6 +756,71 @@ kubectl edit pod ubuntu-sleeper
 kubectl replace --force -f <PATH_TO_TEMP_FILE>
 ```
 
+#### Service Accounts
+- There are 2 types of accounts in kubernetes
+  1. User Accounts - Used by humans
+    eg: Admin performing administrative task, developer accessing the cluster to deploy application
+  2. Service Accounts - Used by an application
+    eg: Prometheus uses kubernetes service account to pull the kubernetes api for performance metrics, jenkins to deploy application to kubernetes cluster
+
+- When a service account is created, it creates a token and you can use this token as a Bearer token when making API calls to kubernetes cluster
+- Kubernetes mount default service account to pods automatically
+
+```cmd
+- Create a service account
+kubectl create serviceaccount <SERVICE_ACCOUNT_NAME>
+
+- Retrieve service account
+kubectl get serviceaccount
+
+- Describe a service account
+kubectl describe serviceaccount <SERVICE_ACCOUNT_NAME>
+
+When the service account is created, it also creates a token automatically. The service account token is what must be used by the external application while authenticating to the Kubernetes API
+
+- Use the token for api calls
+curl https://192.168.56.70:6555/api -insecure --header "Authorization: Bearer $token"
+```
+
+```yml
+apiVersion: v1
+kind: Secret
+type: kubernetes.io/service-account-token
+metadata:
+  name: mysecretname
+  annotations:
+    kubernetes.io/service-account.name: dsahboard-sa
+```
+
+##### Questions - Service Accounts
+```cmd
+- How many Service Accounts exist in the default namespace?
+kubectl get serviceaccount
+
+- We just deployed the Dashboard application. Inspect the deployment. What is the image used by the deployment?
+kubectl describe deployment <DEPLOYMENT_NAME>
+
+- Inspect the Dashboard Application POD and identify the Service Account mounted on it?
+kubectl describe pod <POD_NAME>
+
+- What type of account does the Dashboard application use to query the Kubernetes API?
+kubectl describe pod <POD_NAME>
+
+- Which account does the Dashboard application use to query the Kubernetes API?
+Service account name is displayed in the error log
+
+- Create a new ServiceAccount named dashboard-sa?
+kubectl create serviceaccount dashboard-sa
+
+- Create an authorization token for the newly created service account, copy the generated token and paste it into the token field of the UI.
+kubectl create token <TOKEN_NAME>
+
+- Update the deployment to use the newly created ServiceAccount
+kubectl edit deployment web-dashboard
+- Add below line inside pod spec
+serviceAccountName: dashboard-sa
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -864,76 +929,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Kubectl commands
-```cmd
-- Run an applicatio
-kubectl run hello-minikube
-
-- Get Cluster information
-kubectl cluster-info
-
-- List all the nodes part of the cluster
-kubectl get nodes
-
-- Run a nginx pod
-kubectl run nginx --image nginx
-
-- Check created pod
-kubectl describe pods nginx
-```
-
-#### Service Accounts
-- There are 2 types of accounts in kubernetes
-  1. User Accounts - Used by humans
-    eg: Admin performing administrative task, developer accessing the cluster to deploy application
-  2. Service Accounts - Used by an application
-    eg: Prometheus uses kubernetes service account to pull the kubernetes api for performance metrics, jenkins to deploy application to kubernetes cluster
-
-- When a service account is created, it creates a token and you can use this token as a Bearer token when making API calls to kubernetes cluster
-- Kubernetes mount default service account to pods automatically
-
-```cmd
-- Create a service account
-kubectl create serviceaccount $service_account_name
-
-- Retrieve service account
-kubectl get serviceaccount
-
-- Describe a service account
-kubectl describe serviceaccount $service_account_name
-
-- Use the token for api calls
-curl https://192.168.56.70:6555/api -insecure --header "Authorization: Bearer $token"
-```
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: my-kubernetes-dashboard
-spec:
-  containers:
-    - name: my-dashboard
-      image: my-dashboard
-  serviceAccountName: dashboard-sa
-```
-
-##### Questions - Service Accounts
-```cmd
-- How many Service Accounts exist in the default namespace?
-kubectl get serviceaccount
-
-- We just deployed the Dashboard application. Inspect the deployment. What is the image used by the deployment?
-kubectl describe deployment web-dashboard
-
-- Inspect the Dashboard Application POD and identify the Service Account mounted on it?
-kubectl describe pod web-dashboard-6cbbc88b59-r2pnl
-
-- Create a new ServiceAccount named dashboard-sa?
-kubectl create serviceaccount dashboard-sa
-
-```
 
 #### Resource Requirements
 - Kubernetes assumes that a Pod or a container within a pod requires 0.5 CPU and 256 mebibyte(Mi) of memory.
