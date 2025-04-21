@@ -8,14 +8,14 @@ A cluster is a set of nodes grouped together. This way even if one node fails yo
 
 #### Master vs Worker Nodes
 
-##### Master
+#### Master
 Contains
 - kube-apiserver: Acts as the frontend for kubernetes, talks to the api server to interact with the cluster
 - etcd: Distributed key-value store to store all data used to manage the cluster
 - controller: Notices and responds when nodes, containers or endpoints goes down
 - scheduler: Distributing work or containers across multiple nodes, looks for newly created containers and assigns them to nodes
 
-##### Worker
+#### Worker
 Contains
 - kubelet: Is the agent responsible for making sure that the containers are running on the node as expected
 - container runtime: Underline software used to run containers
@@ -57,7 +57,7 @@ kubectl get pods
 kubectl describe pod myapp-pod
 ```
 
-##### Questions - Pods
+#### Questions - Pods
 ```cmd
 - Check running pods
 kubectl get pods
@@ -165,7 +165,7 @@ kubectl scale --replicas=6 -f definition.yaml
 kubectl scale --replicas=6 <TYPE> <NAME>
 ```
 
-##### Questions - ReplicaSet
+#### Questions - ReplicaSet
 ```cmd
 - How many ReplicaSets exist on the system?
 kubectl get replicasets
@@ -243,7 +243,7 @@ kubectl describe deployment $deployment_name
 kubectl get all
 ```
 
-##### Questions - Deployment
+#### Questions - Deployment
 ```cmd
 - How many deployments exists in the system?
 kubectl get deployments
@@ -300,7 +300,7 @@ spec:
     limits.memory: 10Gi
 ```
 
-##### Questions - Namespaces
+#### Questions - Namespaces
 ```cmd
 - How many Namespaces exist on the system?
 kubectl get ns
@@ -355,7 +355,7 @@ kubectl expose pod redis --port=6379 --name redis-service --dry-run=client -o ya
 kubectl expose pod nginx --port=80 --name nginx-service --type=NodePort --dry-run=client -o yaml
 ```
 
-##### Questions - Imperative Commands
+#### Questions - Imperative Commands
 ```cmd
 - Deploy a pod named nginx-pod using the nginx:alpine image?
 kubectl run nginx-pod --image=nginx:alpine
@@ -746,7 +746,7 @@ spec:
           add: ["MAC_ADMIN"]
 ```
 
-##### Questions - Security Contexts
+#### Questions - Security Contexts
 ```cmd
 - What is the user used to execute the sleep process within the ubuntu-sleeper pod?
 kubectl exec ubuntu-sleeper -- whoami
@@ -792,7 +792,7 @@ metadata:
     kubernetes.io/service-account.name: dsahboard-sa
 ```
 
-##### Questions - Service Accounts
+#### Questions - Service Accounts
 ```cmd
 - How many Service Accounts exist in the default namespace?
 kubectl get serviceaccount
@@ -863,6 +863,70 @@ kubectl get pods -o wide
 
 - The elephant pod runs a process that consumes 15Mi of memory. Increase the limit of the elephant pod to 20Mi.
 kubectl replace --force -f elephant.yaml
+```
+
+#### Taints and Tolerations
+- Better way to visualize this is using a person(node) and a bug(pod)
+- There are 2 things that determine whether a bug can land on a person
+  1. Persons Taint
+  2. Bugs toleration level
+- Taints and Toleration are used to set restrictions on what pods can be scheduled on a node
+- If we apply a toleration on a pod, and a taint on a node, that specific pod can only be deployed in that node because of the toleration
+- Taints are set on nodes while Tolerations are set on pods
+- If we add a Taint on the node then any pod without a toleration cannot placed in that node
+- There are 3 taint-effects
+  1. NoSchedule: Pods will not be scheduled on the node
+  2. PreferNoSchedule: The system will try to avoid placing a pod on the node
+  3. NoExecute: New pods will not be scheduled on the node, if there are any existing pods on the node that do not tolerate the taint will be evicted
+
+```cmd
+- Apply a Taint on a node
+kubectl taint nodes <NODE_NAME> key=value:<TAINT_EFFECT>
+kubectl taint nodes node1 app=blue:NoSchedule
+
+- Check master node taint
+kubectl describe node kubemaster | grep Taint
+```
+
+- Add a Toleration to a Pod
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      tolerations:
+      - key: "app"
+        operator: "Equal"
+        value: "blue"
+        effect: "NoSchedule"
+```
+
+- Even though we add a Taint in a specific node and a toleration to a pod, that pod can be placed in another node as well. If we need to restrict a pod to certain nodes it is achieved through another concept called Node Affinity.
+- Master node have a taint to stop pods from being scheduled on the node itself
+
+#### Questions - Taints and Tolerations
+```cmd
+- How many nodes exist on the system?
+kubectl get nodes
+
+- Do any taints exist on node01 node?
+kubectl describe node node01 | grep Taints
+
+- Create a taint on node01 with key of spray, value of mortein and effect of NoSchedule
+kubectl taint nodes node01 spray=mortein:NoSchedule
+
+- Create a new pod with the nginx image and pod name as mosquito
+kubectl run mosquito --image=nginx
+
+- Do you see any taints on controlplane node?
+kubectl describe node controlplane | grep Taint
+
+- Remove the taint on controlplane, which currently has the taint effect of NoSchedule.
+kubectl edit node controlplane
 ```
 
 #### Updates and Rollbacks
@@ -974,62 +1038,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
 
-#### Taints and Tolerations
-- Taints and Toleration are used to set restrictions on what pods can be scheduled on a node
-- If we apply a toleration on a pod, and a taint on a node, that specific pod can only be deployed in that node because of the toleration
-- Taints are set on nodes while Tolerations are set on pods
-- There are 3 taint-effects
-  1. NoSchedule: Pods will not be scheduled on the node
-  2. PreferNoSchedule: The system will try to avoid placing a pod on the node
-  3. NoExecute: New pods will not be scheduled on the node, if there are any existing pods on the node that do not tolerate the taint will be evicted
-- Master node have a taint to stop pods from being scheduled on the node itself
-
-```cmd
-- Apply a Taint on a node
-kubectl taint nodes $node_name key=value:$taint_effect
-kubectl taint nodes node1 app=blue:NoSchedule
-
-- Check master node taint
-kubectl describe node kubemaster | grep Taint
-```
-- Add a Toleration to a Pod
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-spec:
-  containers:
-    - name: nginx-container
-      image: nginx
-      tolerations:
-      - key: "app"
-        operator: "Equal"
-        value: "blue"
-        effect: "NoSchedule"
-```
-
-##### Questions - Taints and Tolerations
-```cmd
-- How many nodes exist on the system?
-kubectl get nodes
-
-- Do any taints exist on node01 node?
-kubectl describe node node01 | grep Taints
-
-- Create a taint on node01 with key of spray, value of mortein and effect of NoSchedule
-kubectl taint nodes node01 spray=mortein:NoSchedule
-
-- Create a new pod with the nginx image and pod name as mosquito
-kubectl run mosquito --image=ngin
-
-- Do you see any taints on controlplane node?
-kubectl describe node controlplane | grep Taint
-
-- Remove the taint on controlplane, which currently has the taint effect of NoSchedule.
-kubectl edit node controlplane
-```
-
 #### Node Selectors
 - We can define some limitations on the pod so that they can only run on particular nodes
 - key=value labels are assigned to the node, scheduler uses these labels to match and identify the right node to place the pods on
@@ -1082,7 +1090,7 @@ spec:
   2. preferredDuringSchedulingIgnoredDuringExecution: If there are no matching rules pods might schedule on any node
   3. requiredDuringSchedulingRequiredDuringExecution
    
-##### Questions - Node Affinity
+#### Questions - Node Affinity
 ```cmd
 - How many Labels exist on node node01?
 kubectl get nodes node01 --show-labels
@@ -1126,7 +1134,7 @@ spec:
     image: log-agent
 ```
 
-##### Questions - Multi Container Pods
+#### Questions - Multi Container Pods
 ```cmd
 - Identify the number of containers created in the red pod?
 kubectl describe pod red
@@ -1158,7 +1166,7 @@ spec:
     command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ;']
 ```
 
-##### Questions - InitContainers
+#### Questions - InitContainers
 ```cmd
 - Identify the pod that has an initContainer configured.
 kubectl describe pod blue
@@ -1273,7 +1281,7 @@ kubectl logs -f event-simulator-pod image-processor
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
-##### Questions - Monitoring
+#### Questions - Monitoring
 ```cmd
 - Identify the node that consumes the most Memory(bytes).
 kubectl top node
@@ -1327,7 +1335,7 @@ spec:
   replicas: 3
 ```
 
-##### Questions - Labels, Selectors and Annotations
+#### Questions - Labels, Selectors and Annotations
 ```cmd
 - We have deployed a number of PODs. They are labelled with tier, env and bu. How many PODs exist in the dev environment (env)?
 kubectl get pods --selector env=dev
@@ -1360,7 +1368,7 @@ kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1
 kubectl rollout undo $deployment_name
 ```
 
-##### Updates and Rollbacks
+#### Updates and Rollbacks
 ```cmd
 - Create a nginx deployment with 3 replicas
 kubectl create deployment nginx --image=nginx --replicas=3 --dry-run=client -o yaml > mydeployment.yml
@@ -1384,7 +1392,7 @@ kubectl set image deployment/nginx nginx=ngnix:1.12
 kubectl rollout undo deployment/nginx
 ```
 
-##### Questions - Updates and Rollbacks
+#### Questions - Updates and Rollbacks
 ```cmd
 - What container image is used to deploy the applications?
 kubectl describe deployment frontend
@@ -1456,7 +1464,7 @@ spec:
           restartPolicy: Never
 ```
 
-##### Questions - Jobs and CronJobs
+#### Questions - Jobs and CronJobs
 ```cmd
 - Let us now schedule that job to run at 21:30 hours every day.
 kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedule='30 21 * * *'
@@ -1505,7 +1513,7 @@ spec:
 
   3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
 
-##### Questions - Services
+#### Questions - Services
 ```cmd
 - How many Services exist on the system?
 kubectl get svc
@@ -1559,7 +1567,7 @@ kubectl describe ingress $ingress_name
 kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80" --dry-run=client -o yaml > ingress.yml
 ```
 
-##### Questions - Ingress Networking 1
+#### Questions - Ingress Networking 1
 ```cmd
 - Which namespace is the Ingress Controller deployed in?
 kubectl get all -A
@@ -1577,7 +1585,7 @@ kubectl get ingress --namespace app-space
 kubectl create ingress ingress-pay -n critical-space --rule="/pay=pay-service:8282"
 ```
 
-##### Questions - Ingress Networking 2
+#### Questions - Ingress Networking 2
 ```cmd
 - We have deployed two applications. Explore the setup.
 kubectl get all -A
@@ -1641,7 +1649,7 @@ spec:
 - Once you allow ingress traffic you dont need to specify a separate rule for egress traffic as well
 - You only need to add the traffic which is originating from source to target
 
-##### Questions - Network Policies
+#### Questions - Network Policies
 ```cmd
 - What is the name of the Network Policy?
 kubectl get networkpolicies
@@ -1791,7 +1799,7 @@ spec:
       claimName: myClaim
 ```
 
-##### Questions - Storage Class
+#### Questions - Storage Class
 ```cmd
 - How many StorageClasses exist in the cluster right now?
 kubectl get sc
@@ -1899,7 +1907,7 @@ COPY . /opt/source-code
 ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
 ```
 
-##### Questions - Docker images
+#### Questions - Docker images
 ```cmd
 - Build a docker image using the Dockerfile and name it webapp-color. No tag to be specified?
 docker build -t webapp-color .
@@ -1992,7 +2000,7 @@ users:
     client-key: admin.key
 ```
 
-##### Questions - KubeConfig
+#### Questions - KubeConfig
 ```cmd
 - Where is the default kubeconfig file located in the current environment?
 $HOME/.kube/config
