@@ -929,6 +929,73 @@ kubectl describe node controlplane | grep Taint
 kubectl edit node controlplane
 ```
 
+#### Node Selectors
+- We can define some limitations on the pod so that they can only run on particular nodes
+- key=value labels are assigned to the node, scheduler uses these labels to match and identify the right node to place the pods on
+- There are some limitations with NodeSelectors, for that we have NodeAffinity and NodeAntiAffnity rules
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+  nodeSelector:
+    size: Large
+```
+
+```cmd
+- Labeling a node
+kubectl label nodes <NODE_NAME> <KEY>=<VALUE>
+kubectl label nodes node-1 size=Large
+```
+
+#### NodeAffinity
+- To make sure that pods are hosted on particular nodes
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: size
+            operator: In # NotIn Exists
+            values:
+            - Large
+            - Medium
+```
+
+- Node Affinity Types
+  1. requiredDuringSchedulingIgnoredDuringExecution: If these rules are matching only pods are placed on nodes
+  2. preferredDuringSchedulingIgnoredDuringExecution: If there are no matching rules pods might schedule on any node
+  3. requiredDuringSchedulingRequiredDuringExecution
+   
+#### Questions - Node Affinity
+```cmd
+- How many Labels exist on node node01?
+kubectl get nodes node01 --show-labels
+
+- Apply a label color=blue to node node01?
+kubectl label node node01 color=blue
+
+- Create a new deployment named blue with the nginx image and 3 replicas?
+kubectl create deployment blue --image=nginx --replicas=3
+```
+
+- We can use Taints/Toleration to prevent other pods from being placed on our nodes and node affinity to prevent our pods from being placed on their nodes
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -1037,70 +1104,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Node Selectors
-- We can define some limitations on the pod so that they can only run on particular nodes
-- key=value labels are assigned to the node, scheduler uses these labels to match and identify the right node to place the pods on
-- There are some limitations with NodeSelectors, for that we have NodeAffinity and NodeAntiAffnity rules
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-spec:
-  containers:
-  - name: nginx-container
-    image: nginx
-  nodeSelector:
-    size: Large
-```
-
-```cmd
-- Labeling a node
-kubectl label node $node_name $key=$value
-```
-
-#### NodeAffinity
-- To make sure that pods are hosted on particular nodes
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-spec:
-  containers:
-  - name: nginx-container
-    image: nginx
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: size
-            operator: In # NotIn Exists
-            values:
-            - Large
-            - Medium
-```
-
-- Node Affinity Types
-  1. requiredDuringSchedulingIgnoredDuringExecution: If these rules are matching only pods are placed on nodes
-  2. preferredDuringSchedulingIgnoredDuringExecution: If there are no matching rules pods might schedule on any node
-  3. requiredDuringSchedulingRequiredDuringExecution
-   
-#### Questions - Node Affinity
-```cmd
-- How many Labels exist on node node01?
-kubectl get nodes node01 --show-labels
-
-- Apply a label color=blue to node node01?
-kubectl label node node01 color=blue
-
-- Create a new deployment named blue with the nginx image and 3 replicas?
-kubectl create deployment blue --image=nginx --replicas=3
-```
 
 #### Taints Tolerations and Node Affinity
 
