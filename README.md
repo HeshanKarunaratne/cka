@@ -994,7 +994,54 @@ kubectl label node node01 color=blue
 kubectl create deployment blue --image=nginx --replicas=3
 ```
 
-- We can use Taints/Toleration to prevent other pods from being placed on our nodes and node affinity to prevent our pods from being placed on their nodes
+#### Taints Tolerations and Node Affinity
+
+- We have Blue, Red, Green and Other nodes. We have blue, red, green and other pods as well. Each separate pod must reside in the correct node. It should not be scheduled in a different node.
+- If use use both taints and tolerations that will not make sure that respective pods will not ends up in a different node which doesnt have any taints at all. It will make sure if there is a taint on the node, only tolerable pods are placed upon the node.
+- If we use node affinity to label each nodes and then set nodeSelectors on the pods to tie them to their nodes. That will not make sure that other pods will be placed on these nodes.
+- For this to happen, we can use both Taint and Tolerations along with node affinity
+- We use Taints and Tolerations to stop other pods from placed on our nodes, then use node affinity to prevent our pods from being placed on their nodes.
+
+#### Multi Container Pods
+- Created together, destroyed together to share the same lifecycle.
+- They have access to each other through localhost and they have access to the same storage volumes
+
+- Design Patterns
+  1. SideCar Pattern - Log agent
+  2. Adapter Pattern - Centralized agent to convert the messages to a common format
+  3. Ambassador Pattern - Choosing the correct database but being able to use localhost throughout the application code
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+  - name: simple-webapp
+    image: simple-webapp
+    ports:
+    - containerPort: 8080
+  - name: log-agent
+    image: log-agent
+```
+
+#### Questions - Multi Container Pods
+```cmd
+- Identify the number of containers created in the red pod?
+kubectl describe pod red
+
+- Create a multi container pod with 2 containers. If the pod goes to crashloopbackoff then add sleep 1000 in the lemon containers.
+Name: yellow; Container 1 name:lemon; Container 1 image: busybox; Container 2 name:gold; Container 2 image: redis
+kubectl run yellow --image=busybox --dry-run=client -o yaml 
+MAke sure to edit and update with the correct infomation
+
+- Inspect the app pod and identify the number of containers in it. It is deployed in the elastic-stack namespace?
+kubectl describe pod app -n elastic-stack
+
+- The application outputs logs to the file /log/app.log. View the logs and try to identify the user having issues with Login?
+kubectl logs app
+```
 
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
@@ -1104,50 +1151,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Taints Tolerations and Node Affinity
-
-- We have Blue, Red, Green and Other nodes. We have blue, red, green and other pods as well. Each separate pod must reside in the correct node. It should not be scheduled in a different node.
-- If use use both taints and tolerations that will not make sure that respective pods will not ends up in a different node which doesnt have any taints at all. It will make sure if there is a taint on the node, only tolerable pods are placed upon the node.
-- If we use node affinity to label each nodes and then set nodeSelectors on the pods to tie them to their nodes. That will not make sure that other pods will be placed on these nodes.
-- For this to happen, we can use both Taint and Tolerations along with node affinity
-- We use Taints and Tolerations to stop other pods from placed on our nodes, then use node affinity to prevent our pods from being placed on their nodes.
-
-#### Multi Container Pods
-- Created together, destroyed together to share the same lifecycle.
-- They have access to each other through localhost and they have access to the same storage volumes
-
-- Design Patterns
-  1. SideCar Pattern - Log agent
-  2. Adapter Pattern - Centralized agent to convert the messages to a common format
-  3. Ambassador Pattern - Choosing the correct database but being able to use localhost throughout the application code
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-spec:
-  containers:
-  - name: simple-webapp
-    image: simple-webapp
-    ports:
-    - containerPort: 8080
-  - name: log-agent
-    image: log-agent
-```
-
-#### Questions - Multi Container Pods
-```cmd
-- Identify the number of containers created in the red pod?
-kubectl describe pod red
-
-- Inspect the app pod and identify the number of containers in it. It is deployed in the elastic-stack namespace?
-kubectl describe pod app -n elastic-stack
-
-- The application outputs logs to the file /log/app.log. View the logs and try to identify the user having issues with Login?
-kubectl logs app
-```
 
 #### InitContainers
 
