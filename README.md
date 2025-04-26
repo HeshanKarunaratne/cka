@@ -1077,6 +1077,107 @@ Check the State
 kubectl describe pod <POD_NAME>
 ```
 
+#### Readiness and Liveness Probes
+Pod status can be from Pending, ContainerCreating and Running. When a POD is first created, it is in a Pending state. If the scheduler cannot find a node to place the POD, it remains in a Pending state. Once the POD is scheduled, it goes into a ContainerCreating status, were the images required for the application are pulled and the container starts. Once all the containers in a POD starts, it goes into a running state, were it continues to be until the program completes successfully or is terminated. What we need here is a way to tie the ready condition to the actual state of the application inside the container.
+
+- Readiness Probes
+  1. HTTP Test - Testing an API
+
+  ```yml
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+  ```
+
+  2. TCP Test - Testing a port available
+
+  ```yml
+  readinessProbe:
+    tcpSocket:
+      port: 3306
+  ```
+
+  3. Exec Command - Running a script inside the container
+
+  ```yml
+  readinessProbe:
+    exec:
+      command: ["cat", "/app/is_ready"]
+  ```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: myapp
+    ports:
+    - containerPort: 8080
+    readinessProbe:
+      httpGet:
+        path: /api/ready
+        port: 8080
+```
+
+- Liveness Probes
+
+What if the container is up, but due to a bug application is stuck in an infinite loop and hence not working. Liveness probe can be configured on the container to periodically test whether the application within the container is actually healthy. If the test fails, the container is considered unhealthy and destryed and recreated.
+
+  1. HTTP Test - Testing an API
+
+  ```yml
+  livenessProbe:
+    httpGet:
+      path: /api/ready
+      port: 8080
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    failureThreshold: 8
+  ```
+
+  2. TCP Test - Testing a port available
+
+  ```yml
+  livenessProbe:
+    tcpSocket:
+      port: 3306
+  ```
+
+  3. Exec Command - Running a script inside the container
+
+  ```yml
+  livenessProbe:
+    exec:
+      command: ["cat", "/app/is_ready"]
+  ```
+
+#### Questions - Readiness and Liveness Probes
+```cmd
+- Update both the pods with a livenessProbe using the given spec
+spec:
+  containers:
+  - image: kodekloud/webapp-delayed-start
+    name: simple-webapp
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+    livenessProbe:
+      httpGet:
+        path: /live
+        port: 8080
+      initialDelaySeconds: 80
+      periodSeconds: 1
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -1185,90 +1286,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Readiness and Liveness Probes
-- Pod status can be from Pending, ContainerCreating and Running
-- We need to tie the ready condition to the actual state of the application inside the container
-
-- Readiness Probes
-  1. HTTP Test - Testing an API
-
-  ```yml
-  readinessProbe:
-    httpGet:
-      path: /api/ready
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    failureThreshold: 8
-  ```
-
-  2. TCP Test - Testing a port available
-
-  ```yml
-  readinessProbe:
-    tcpSocket:
-      port: 3306
-  ```
-
-  3. Exec Command - Running a script inside the container
-
-  ```yml
-  readinessProbe:
-    exec:
-      command: ["cat", "/app/is_ready"]
-  ```
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-  labels:
-    app: myapp
-spec:
-  containers:
-  - name: myapp-container
-    image: myapp
-    ports:
-    - containerPort: 8080
-    readinessProbe:
-      httpGet:
-        path: /api/ready
-        port: 8080
-```
-
-- Liveness Probes
-- What if the container is up, but due to a bug application is stuck in an infinite loop and hence not working.
-- Liveness probe can be configured on the container to periodically test whether the application within the contianer is actually healthy. If the test fails, the container is considered unhealthy and destryed and recreated.
-
-  1. HTTP Test - Testing an API
-
-  ```yml
-  livenessProbe:
-    httpGet:
-      path: /api/ready
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    failureThreshold: 8
-  ```
-
-  2. TCP Test - Testing a port available
-
-  ```yml
-  livenessProbe:
-    tcpSocket:
-      port: 3306
-  ```
-
-  3. Exec Command - Running a script inside the container
-
-  ```yml
-  livenessProbe:
-    exec:
-      command: ["cat", "/app/is_ready"]
-  ```
 
 #### Logging
 
