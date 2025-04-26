@@ -1043,6 +1043,40 @@ kubectl describe pod app -n elastic-stack
 kubectl logs app
 ```
 
+#### InitContainers
+In a multi-container pod, each container is expected to run a process that stays alive as long as the POD's lifecycle. But at times you may want to run a process that runs to completion in a container. That is a task that will be run only one time when the pod is first created. An initContainer is configured in a pod like all other containers, except that it is specified inside a initContainers section, like this:
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: myapp-container
+    image: busybox:1.28
+    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
+  initContainers:
+  - name: init-myservice
+    image: busybox
+    command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ;']
+```
+
+#### Questions - InitContainers
+```cmd
+- Identify the pod that has an initContainer configured.
+kubectl describe pod <POD_NAME>
+
+- What is the state of the initContainer on pod blue?
+kubectl describe pod <POD_NAME>
+Check the State
+
+- We just created a new app named purple. How many initContainers does it have?
+kubectl describe pod <POD_NAME>
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -1151,32 +1185,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### InitContainers
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: myapp-pod
-  labels:
-    app: myapp
-spec:
-  containers:
-  - name: myapp-container
-    image: busybox:1.28
-    command: ['sh', '-c', 'echo The app is running! && sleep 3600']
-  initContainers:
-  - name: init-myservice
-    image: busybox
-    command: ['sh', '-c', 'git clone <some-repository-that-will-be-used-by-application> ;']
-```
-
-#### Questions - InitContainers
-```cmd
-- Identify the pod that has an initContainer configured.
-kubectl describe pod blue
-```
 
 #### Readiness and Liveness Probes
 - Pod status can be from Pending, ContainerCreating and Running
