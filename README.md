@@ -1178,6 +1178,34 @@ spec:
       periodSeconds: 1
 ```
 
+#### Logging
+
+```cmd
+- Create a pod
+kubectl create -f event-simulator.yml
+
+- Trail the logs
+kubectl logs -f event-simulator-pod
+
+- When there are multiple containers
+kubectl logs -f event-simulator-pod image-processor
+```
+
+#### Monitoring- Metrics Server
+
+You can have 1 metrics server per kubernetes cluster. Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory.Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server. Kubelet contains a sub component known as CAdvisor. CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server.
+
+```cmd
+- Run below command to run metrics server
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
+
+#### Questions - Monitoring
+```cmd
+- Identify the node that consumes the most Memory(bytes).
+kubectl top node
+```
+
 #### Updates and Rollbacks
 When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
 
@@ -1286,37 +1314,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Logging
-
-```cmd
-- Create a pod
-kubectl create -f event-simulator.yml
-
-- Trail the logs
-kubectl logs -f event-simulator-pod
-
-- When there are multiple containers
-kubectl logs -f event-simulator-pod image-processor
-```
-
-#### Monitoring- Metrics Server
-- You can have 1 metrics server per kubernetes cluster
-- Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory
-- Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server
-- Kubelet contains a sub component known as cAdvisor or Container Advisor
-- CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server
-
-```cmd
-- Run below command to run metrics server
-kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
-```
-
-#### Questions - Monitoring
-```cmd
-- Identify the node that consumes the most Memory(bytes).
-kubectl top node
-```
 
 #### Labels, Selectors and Annotations
 
