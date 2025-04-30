@@ -1271,26 +1271,56 @@ kubectl get all --selector env=prod
 kubectl get pods --selector env=prod,bu=finance,tier=frontend
 ```
 
-#### Updates and Rollbacks
-When you first create a deployment it triggers a rollout. A new rollout creates a new deployment revision. In the future when the application is upgraded, a new rollout is triggered and a new deployment revision is created.
+#### Rolling Updates and RollBacks
 
-```cmd
-kubectl rollout status deployment/myapp-deployment
-kubectl rollout history deployment/myapp-deployment
-kubectl apply -f deployment-definition.yml
-kubectl setimage deployment/myapp-deployment nginx=nginx:1.9.1
-kubectl describe deployment myapp-deployment
-kubectl rollout undo deployment/myapp-deployment
-kubectl run nginx --image=nginx
-kubectl get deployments
-kubectl create -f deployment-definition.yml --record
-```
-
-- Deployment Strategies
+When you created a deployment a new rollout is triggered with a new revision number. There are 2 main types of deployment strategies
   1. Recreate: Destroy all the old versions and create the new versions. There will be an application downtime
   2. Rolling update(default): Incremently bring down old version/create new version at a time. In this way application never goes down
 
+ ```cmd
+ - Check the status of a rollout
+ kubectl rollout status <DEPLOYMENT_NAME>
+ 
+ - Show the history of the revisions
+ kubectl rollout history <DEPLOYMENT_NAME>
+ 
+ - Update the image of the application
+ kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1
+ 
+ - Rollback to previous revision
+ kubectl rollout undo <DEPLOYMENT_NAME>
 
+ - Create a nginx deployment with 3 replicas
+ kubectl create deployment nginx --image=nginx --replicas=3 --dry-run=client -o yaml > mydeployment.yml
+ 
+ - Apply the deployment
+ kubectl apply -f mydeployment.yml --record
+ 
+ - Check the status of the deployment
+ kubectl rollout status deployment/nginx
+ 
+ - Check the history of revisions
+ kubectl rollout history deployment/nginx
+ 
+ - Delete the deployment
+ kubectl delete deployment nginx
+ 
+ - Changing the version using set image
+ kubectl set image deployment/nginx nginx=ngnix:1.12
+ 
+ - Rollback to previous revision
+ kubectl rollout undo deployment/nginx
+ ```
+ 
+ #### Questions - Updates and Rollbacks
+ ```cmd
+ - What container image is used to deploy the applications?
+ kubectl describe deployment frontend
+ 
+ - Upgrade the application by setting the image on the deployment to kodekloud/webapp-color:v2
+ kubectl set image deployment/frontend simple-webapp=kodekloud/webapp-color:v2
+ ```
+ 
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
