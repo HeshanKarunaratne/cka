@@ -1306,7 +1306,7 @@ When you created a deployment a new rollout is triggered with a new revision num
  kubectl delete deployment nginx
  
  - Changing the version using set image
- kubectl set image deployment/nginx nginx=ngnix:1.12
+ kubectl set image deployment/<DEPLOYMENT_NAME> <CONTAINER_NAME>=ngnix:1.12
  
  - Rollback to previous revision
  kubectl rollout undo deployment/nginx
@@ -1315,12 +1315,86 @@ When you created a deployment a new rollout is triggered with a new revision num
  #### Questions - Updates and Rollbacks
  ```cmd
  - What container image is used to deploy the applications?
- kubectl describe deployment frontend
+ kubectl describe deployment <DEPLOYMENT_NAME>
  
  - Upgrade the application by setting the image on the deployment to kodekloud/webapp-color:v2
  kubectl set image deployment/frontend simple-webapp=kodekloud/webapp-color:v2
  ```
- 
+
+#### Jobs
+
+To stop the pod from restarting after exiting add `restartPolicy: Never` on a Pod definition file
+```yml
+apiVersion: v1
+kind: Pod
+metadata: 
+  name: math-pod
+spec: 
+  containers:
+    - name: math-add
+      image: ubuntu
+      command: ["expr", "3", "+", "2"]
+  restartPolicy: Never
+```
+
+Job: While a ReplicaSet is used to make sure a specified number of PODs are running at all times, a Job is used to run a set of PODs to perform a given task to completion
+
+```yml
+apiVersion: batch/v1
+kind: Jobi
+metadata: 
+  name: math-add-job
+spec:
+  completions: 3
+  parallelism: 3
+  template:
+    spec: 
+      containers:
+        - name: math-add
+          image: ubuntu
+          command: ["expr", "3", "+", "2"]
+      restartPolicy: Never
+```
+
+```cmd
+- Get all jobs
+kubectl get jobs
+
+- See the logs of the pod
+kubectl logs <POD_NAME>
+
+- Delete jobs
+kubectl delete job <JOB_NAME>
+```
+
+#### CronJobs
+
+```yml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata: 
+  name: report-cron-job
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      completions: 3
+      parallelism: 3
+      template:
+        spec: 
+          containers:
+            - name: math-add
+              image: ubuntu
+              command: ["expr", "3", "+", "2"]
+          restartPolicy: Never
+```
+
+#### Questions - Jobs and CronJobs
+```cmd
+- Let us now schedule that job to run at 21:30 hours every day.
+kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedule='30 21 * * *'
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -1409,75 +1483,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Jobs
-
-- To stop the pod from restarting after exiting
-```yml
-apiVersion: v1
-kind: Pod
-metadata: 
-  name: math-pod
-spec: 
-  containers:
-    - name: math-add
-      image: ubuntu
-      command: ["expr", "3", "+", "2"]
-  restartPolicy: Never
-```
-
-- Job definition file
-```yml
-apiVersion: batch/v1
-kind: Job
-metadata: 
-  name: math-add-job
-spec:
-  completions: 3
-  parallelism: 3
-  template:
-    spec: 
-      containers:
-        - name: math-add
-          image: ubuntu
-          command: ["expr", "3", "+", "2"]
-      restartPolicy: Never
-```
-
-```cmd
-kubectl get jobs
-kubectl get pods
-kubectl logs $pod_name
-kubectl delete job $pod_name
-```
-
-#### CronJobs
-
-```yml
-apiVersion: batch/v1beta1
-kind: CronJob
-metadata: 
-  name: report-cron-job
-spec:
-  schedule: "*/1 * * * *"
-  jobTemplate:
-    spec:
-      completions: 3
-      parallelism: 3
-      template:
-        spec: 
-          containers:
-            - name: math-add
-              image: ubuntu
-              command: ["expr", "3", "+", "2"]
-          restartPolicy: Never
-```
-
-#### Questions - Jobs and CronJobs
-```cmd
-- Let us now schedule that job to run at 21:30 hours every day.
-kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedule='30 21 * * *'
-```
 
 #### Services
 - There are multiple services
