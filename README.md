@@ -1395,27 +1395,23 @@ spec:
 kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedule='30 21 * * *'
 ```
 
-#### Networks
-IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
-
 #### Services
-Kubernetes services enable communication between various components within and outside of the application.
-
-#### NodePort
-Service makes an internal pod accessible on a port on the pod
+Kubernetes services enable communication between various components within and outside of the application. There are multiple services
+  1. NodePort: Service makes an internal port accessible on a port on the node
+  - There are 3 ports involved in this service
+    1. targetPort - Port on the pod
+    2. port - Port on the service
+    3. nodePort - Port on the node(30000-32767)
 
 <img src="images/nodeport_service.PNG" alt="Alt text" width="800" height="400">
 
-There are 3 ports involved
-  - Target Port(80): The port on the pod where the actual web server is runnning
-  - Port(80): The port on the service
-  - NodePort(30008): The node port(30000-32767)
+In any case whether its a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
 
-```yaml
+```yml
 apiVersion: v1
 kind: Service
 metadata: 
-  name: myapp-nodeport-service
+  name: myapp-service
 spec: 
   type: NodePort
   ports:
@@ -1426,34 +1422,54 @@ spec:
     app: myapp
     type: front-end
 ```
-- 'port' is the only mandatory field and ports is an array
 
-```cmd
-kubectl create -f nodeport-service-definition.yml
-kubectl get services
-```
-
-In any case whether its a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
-
-- Get the ip using `ipconfig` and use `curl $ipconfg:30008`
-#### ClusterIP
-Service creates a virtual IP inside the cluster to enable communication between differnet services
+  2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
 
 ```yml
 apiVersion: v1
 kind: Service
 metadata: 
-  name: myapp-clusterip-service
+  name: myapp-service
 spec: 
   type: ClusterIP
   ports:
-    - targetPort: 80
-      port: 80
+    - targetPort: 80  # backend exposed port
+      port: 80 # service exposed port
   selector:
     app: myapp
+    type: front-end
 ```
 
-Service can be accessed by other pods using cluster ip or the service name
+  3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
+
+```cmd
+- Create a service
+kubectl create -f nodeport-service-definition.yml
+
+- Get all the services
+kubectl get services
+```
+
+#### Questions - Services
+```cmd
+- How many Services exist on the system?
+kubectl get svc
+
+- What is the type of the default kubernetes service?
+kubectl get svc
+
+- What is the targetPort configured on the kubernetes service?
+kubectl describe svc kubernetes
+
+- How many labels are configured on the kubernetes service?
+kubectl get svc kubernetes --show-labels
+
+- What is the image used to create the pods in the deployment?
+kubectl describe deploy <DEPLOYMENT_NAME>
+```
+
+#### Networks
+IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
 #### LoadBalancer
 Provisions a load balancer for our application
@@ -1483,58 +1499,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Services
-- There are multiple services
-  1. NodePort: Service makes an internal port accessible on a port on the node
-  - There are 3 ports involved in this service
-    1. targetPort - Port on the pod
-    2. port - Port on the service
-    3. nodePort - Port on the node(30000-32767)
-
-```yml
-apiVersion: v1
-kind: Service
-metadata: 
-  name: myapp-service
-spec: 
-  type: NodePort
-  ports:
-    - targetPort: 80
-      port: 80
-      nodePort: 30008
-  selector:
-    app: myapp
-    type: front-end
-```
-
-  2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
-
-```yml
-apiVersion: v1
-kind: Service
-metadata: 
-  name: myapp-service
-spec: 
-  type: ClusterIP
-  ports:
-    - targetPort: 80
-      port: 80
-  selector:
-    app: myapp
-    type: front-end
-```
-
-  3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
-
-#### Questions - Services
-```cmd
-- How many Services exist on the system?
-kubectl get svc
-
-- What is the targetPort configured on the kubernetes service?
-kubectl describe svc kubernetes
-```
 
 #### Ingress
 - Ingress helps your users access your application using a single external accessible URL that youcan configure to route traffic to different services within your cluster. Can implement SSL security as well
