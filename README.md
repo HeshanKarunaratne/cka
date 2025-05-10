@@ -1468,47 +1468,12 @@ kubectl get svc kubernetes --show-labels
 kubectl describe deploy <DEPLOYMENT_NAME>
 ```
 
-#### Networks
-IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
-
-#### LoadBalancer
-Provisions a load balancer for our application
-
-#### Microservices
-
-```cmd
-docker run -d --name=redis redis
-docker run -d --name=db -e POSTGRES_PASSWORD=123 postgres:16
-docker run -d --name=vote -p 5000:80 --link redis:redis saiachyuthm/voting-app
-docker run -d --name=result -p 5001:80 --link db:db saiachyuthm/result-app
-docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-app
-```
-
-- Steps
-  1. Creating the pods
-    - voting-app-pod exposing containerPort 80
-    - worker-app-pod not exposing any ports
-    - result-app-pod exposing containerPort 80
-    - redis-pod exposing containerPort 6379
-    - postgres-pod exposing containerPort 5432
-
-  2. Creating the services
-    - Internal
-      - redis-service exposing port 6379, targetPort 6379, selectors of redis-pod and name as `redis`
-      - postgres-service exposing port 5432, targetPort 5432, selectors of postgres-pod and name as `db`
-    - External
-      - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
-      - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
 #### Ingress
-- Ingress helps your users access your application using a single external accessible URL that youcan configure to route traffic to different services within your cluster. Can implement SSL security as well
-- We can create ingress resources just like deployments, pods, services etc
-- Ingress controller is not deployed to kubernetes cluster by default
-- ex:
-  1. GCE
-  2. Nginx
-- These ingress controllers are not just another load balancer or nginx server, the load balancer component are just a part of it
-- Ingress controllers have additional intelligence built into them to monitor the kubernetes cluster for new definitions or ingress resources
+Ingress helps your users access your application using a single external accessible URL that you can configure to route traffic to different services within your cluster. Can implement SSL security as well. We can create ingress resources just like deployments, pods, services etc. Ingress controller is not deployed to kubernetes cluster by default. 
+
+GCE Load Balancer and NGINX are currently being supported and maintained by the Kubernetes project.
+
+These ingress controllers are not just another load balancer or nginx server, the load balancer component are just a part of it. Ingress controllers have additional intelligence built into them to monitor the kubernetes cluster for new definitions or ingress resources
 
 ```yml
 apiVersion: networking.k8s.io/v1
@@ -1539,10 +1504,18 @@ spec:
 ```
 
 ```cmd
-kubectl create -f ingress-wear.yml
+- Create ingress resource
+kubectl create -f <INGRESS_RESOURCE>
+
+- Get all ingress resource
 kubectl get ingress
-kubectl describe ingress $ingress_name
-kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80" --dry-run=client -o yaml > ingress.yml
+
+- Describe ingress resource
+kubectl describe ingress <INGRESS_RESOURCE>
+
+- Create an ingress resource
+kubectl create ingress <INGRESS_NAME> --rule="<HOST>/<PATH>=<SERVICE>:<PORT>" --dry-run=client -o yaml > ingress.yaml
+kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"
 ```
 
 #### Questions - Ingress Networking 1
@@ -1581,6 +1554,38 @@ kubectl create serviceaccount ingress-nginx-admission -n ingress-nginx
 - Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
 kubectl create ingress ingress-wear-watch -n app-space --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"
 ```
+
+#### Networks
+IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
+
+#### LoadBalancer
+Provisions a load balancer for our application
+
+#### Microservices
+
+```cmd
+docker run -d --name=redis redis
+docker run -d --name=db -e POSTGRES_PASSWORD=123 postgres:16
+docker run -d --name=vote -p 5000:80 --link redis:redis saiachyuthm/voting-app
+docker run -d --name=result -p 5001:80 --link db:db saiachyuthm/result-app
+docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-app
+```
+
+- Steps
+  1. Creating the pods
+    - voting-app-pod exposing containerPort 80
+    - worker-app-pod not exposing any ports
+    - result-app-pod exposing containerPort 80
+    - redis-pod exposing containerPort 6379
+    - postgres-pod exposing containerPort 5432
+
+  2. Creating the services
+    - Internal
+      - redis-service exposing port 6379, targetPort 6379, selectors of redis-pod and name as `redis`
+      - postgres-service exposing port 5432, targetPort 5432, selectors of postgres-pod and name as `db`
+    - External
+      - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
+      - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
 
 #### Network Policies
 - All the pods inside the kubernetes cluster can communicate with each other
