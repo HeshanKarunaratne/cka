@@ -1523,23 +1523,38 @@ kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-
 - Which namespace is the Ingress Controller deployed in?
 kubectl get all -A
 
+- What is the name of the Ingress Controller Deployment?
+kubectl describe deploy <INGRESS_NAME> -n <INGRESS_NAMESPACE>
+
 - Which namespace are the applications deployed in?
 kubectl describe deploy ingress-nginx-controller --namespace ingress-nginx
+
+- How many applications are deployed in the app-space namespace?
+kubectl get deploy -n <NAMESPACE>
+
+- Which namespace is the Ingress Resource deployed in?
+kubectl get ingress -A
 
 - What is the name of the Ingress Resource?
 kubectl get ingress --namespace app-space
 
+- What is the Host configured on the Ingress Resource?
+kubectl describe ingress ingress-wear-watch -n app-space
+
+- If the requirement does not match any of the configured paths in the Ingress, to which service are the requests forwarded?
+kubectl get deploy <DEPLOYMENT_NAME> -n <NAMESPACE_NAME> -o yaml
+
 - A new payment service has been introduced. Since it is critical, the new application is deployed in its own namespace.
- kubectl get svc -A -o wide
+ kubectl get deployment -A -o wide
 
 - You are requested to make the new application available at /pay.
-kubectl create ingress ingress-pay -n critical-space --rule="/pay=pay-service:8282"
+kubectl create ingress <INGRESS_NAME> -n <NAMESPACE_NAME> --rule="/pay=pay-service:8282"
 ```
 
 #### Questions - Ingress Networking 2
 ```cmd
 - We have deployed two applications. Explore the setup.
-kubectl get all -A
+kubectl get deployment -A
 
 Let us now deploy an Ingress Controller. First, create a namespace called ingress-nginx
 kubectl create namespace ingress-nginx
@@ -1550,6 +1565,10 @@ kubectl create configmap ingress-nginx-controller -n ingress-nginx
 - The NGINX Ingress Controller requires two ServiceAccounts. Create both ServiceAccount with name ingress-nginx and ingress-nginx-admission in the ingress-nginx namespace.
 kubectl create serviceaccount ingress-nginx -n ingress-nginx
 kubectl create serviceaccount ingress-nginx-admission -n ingress-nginx
+
+- Let us now create a service to make ingress available to external users.
+Name: ingress; Type: NodePort; Port: 80; TargetPort: 80; NodePort: 30080; Namespace: ingress-space
+kubectl expose deploy <DEPLOYMENT_NAME> -n <NAMESPACE_NAME> --name <CONTAINER_NAME> --port=80 --target-port=80 --type NodePort
 
 - Create the ingress resource to make the applications available at /wear and /watch on the Ingress service.
 kubectl create ingress ingress-wear-watch -n app-space --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"
