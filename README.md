@@ -1574,6 +1574,131 @@ kubectl expose deploy <DEPLOYMENT_NAME> -n <NAMESPACE_NAME> --name <CONTAINER_NA
 kubectl create ingress ingress-wear-watch -n app-space --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"
 ```
 
+#### Network Policies
+All the pods inside the kubernetes cluster can communicate with each other. We can use a network policy to allow/deny communication with each other. Kubernetes is configured by default with an "All Allow" rule that allows traffic from any pod to any other pod or services.
+
+- Below definition is for the db-pod to allow traffic from api-pod through port 3306
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-policy
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod
+    ports:
+    - protocol: TCP
+      port: 3306
+```
+
+In above yml we add a network policy and use labels and selectors to associate the policy with the pods. `role: db` are the labels to match the database pods. We need to make sure only api-pod can communicate to db-pod but only through port 3306. If we haven't specify a policy type this wont deny traffic to those pods, for that policyTypes is mandatory. Once you allow ingress traffic you dont need to specify a separate rule for egress traffic as well. You only need to add the traffic which is originating from source to target.
+
+<img src="images/network-policies-1.png" alt="Alt text" width="622" height="508">
+
+We need to make sure that db-pod is only accesible through the api-pod and only through port 3306. Web-pod should not be able to access db-pod. We dont need to worry on the web-pod and its port effect on db-pod. So we can remove it. We can remove the port of the api-pod as well, since its not needed for our requirement.
+
+<img src="images/network-policies-2.png" alt="Alt text" width="622" height="508">
+
+Kubernetes allows all traffic by default from all pods to all destinations. First of all we need to block out everything going in and out of the database pod.
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-policy
+  namespace: prod # will add the network policy to the prod namespac
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  - Egress
+  # adding Ingress and Egress will block incoming and outgoing traffic on the pod
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod # matching pods with the labels can communicate to db-pod
+      namespaceSelector:
+        matchLabels:
+          name: prod # pods in different namespaces can also communicate to db-pod
+    - ipBlock:
+        cidr: 192.168.5.10/32 # this ip which is not part of k8s can communicate to db-pod
+    ports:
+    - protocol: TCP
+      port: 3306
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 192.168.5.10/32 # egress traffic to this ip address is enabled from db-pod
+    ports:
+    - protocol: TCP
+      port: 80
+```
+
+#### Questions - Network Policies
+```cmd
+- How many network policies do you see in the environment?
+kubectl get networkpolicy
+
+- What is the name of the Network Policy?
+kubectl get networkpolicies
+
+- What type of traffic is this Network Policy configured to handle?
+kubectl describe networkpolicy <POLICY_NAME>
+
+- Create a network policy to allow traffic from the Internal application only to the payroll-service and db-service? Policy Name internal-policy;Policy Type: Egress;Egress Allow: payroll;ayroll Port: 8080;Egress Allow: mysql;MySQL Port: 3306
+kubectl apply -f internal.yml
+```
+
+```yml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: internal-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      name: internal
+  policyTypes:
+  - Egress
+  - Ingress
+  ingress:
+    - {}
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          name: mysql
+    ports:
+    - protocol: TCP
+      port: 3306
+
+  - to:
+    - podSelector:
+        matchLabels:
+          name: payroll
+    ports:
+    - protocol: TCP
+      port: 8080
+
+  - ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -1605,89 +1730,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Network Policies
-- All the pods inside the kubernetes cluster can communicate with each other
-- We can use a network policy to allow/deny communication with each other
-- Below definition is for the db-pod to allow traffic from api-pod through port 3306
-
-```yml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: db-policy
-spec:
-  podSelector:
-    matchLabels:
-      role: db
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          name: api-pod
-      namespaceSelector:
-        matchLabels:
-          name: prod
-    - ipBlock:
-        cidr: 192.168.5.10/32
-    ports:
-    - protocol: TCP
-      port: 3306
-  egress:
-  - to:
-    - ipBlock:
-        cidr: 192.168.5.10/32
-    ports:
-    - protocol: TCP
-      port: 80  
-```
-- In above yml we add a network policy and use labels and selectors to associate the policy with the pods.
-- `role: db` are the labels to match the database pods
-- We need to make sure only api-pod can communicate to db-pod but only through port 3306
-- If we haven't specify a policy type this wont deny traffic to those pods, for that policyTypes is mandatory
-- Once you allow ingress traffic you dont need to specify a separate rule for egress traffic as well
-- You only need to add the traffic which is originating from source to target
-
-#### Questions - Network Policies
-```cmd
-- What is the name of the Network Policy?
-kubectl get networkpolicies
-
-- Create a network policy to allow traffic from the Internal application only to the payroll-service and db-service? Policy Name internal-policy;Policy Type: Egress;Egress Allow: payroll;ayroll Port: 8080;Egress Allow: mysql;MySQL Port: 3306
-kubectl apply -f internal.yml
-```
-
-```yml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: internal-policy
-spec:
-  podSelector:
-    matchLabels:
-      name: internal
-  policyTypes:
-  - Egress
-  - Ingress
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          name: payroll
-    ports:
-    - port: 8080
-      protocol: TCP
-  - to:
-    - podSelector:
-        matchLabels:
-          name: mysql
-    ports:
-    - port: 3306
-      protocol: TCP
-```
 
 #### Volumes & Mounts
 
