@@ -1731,6 +1731,52 @@ spec:
       type: Directory
 ```
 
+#### Persistent Volumes
+
+When you have a large environment with a lot of users deploying a lot of PODs, the users would have to configure storage every time for each POD. Whatever storage solution is used, the user who deploys the PODs would have to configure that on all POD definition files in his environment. Instead, we would like to manage storage more centrally.
+
+A Persistent Volume is a Cluster wide pool of storage volumes configured by an Administrator, to be used by users deploying applications on the cluster. The users can now select storage from this pool using Persistent Volume Claims.
+
+```yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-vol1
+spec:
+  accessModes:
+    - ReadWriteOnce
+    # - ReadWriteMany
+    # - ReadOnlyMany
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /tmp/data
+```
+
+```cmd
+- Create a volume
+kubectl create -f pv-definition.yml
+
+- Get PV in the cluster
+kubectl get persistentvolume
+```
+
+#### Persisten Volume Claims
+
+- Every Persistent Volume Claim is bound to a single Persistent Volume(1:1)
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myClaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -1762,45 +1808,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-
-
-#### Persistent Volumes
-
-```yml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: pv-vol1
-spec:
-  accessModes:
-    - ReadWriteOnce
-  capacity:
-    storage: 1Gi
-  hostPath:
-    path: /tmp/data
-```
-
-```cmd
-kubectl create -f pv-definition.yml
-kubectl get persistentvolume
-```
-
-#### Persisten Volume Claims
-
-- Every Persistent Volume Claim is bound to a single Persistent Volume(1:1)
-```yml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: myClaim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 500Mi
-```
 
 #### Storage Classes
 - Static provisioning
