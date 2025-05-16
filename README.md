@@ -1719,15 +1719,13 @@ spec:
     image: alpine
     command: ["/bin/sh", "-c"]
     args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
-    
     volumeMounts:
-    - mountPAth: /opt
-      name: data-volume
-      
+    - mountPath: /opt
+      name: data-volume   # data-volume gets mounted to any container and logs stores in /opt folder
   volumes:
   - name: data-volume
     hostPath:
-      path: /data
+      path: /data # creates a log directory in the host with the name data-volume
       type: Directory
 ```
 
@@ -1763,7 +1761,15 @@ kubectl get persistentvolume
 
 #### Persisten Volume Claims
 
-- Every Persistent Volume Claim is bound to a single Persistent Volume(1:1)
+Persistent Volumes and Persistent Volume Claims are two separate objects in the Kubernetes namespace.  An Administrator creates a set of Persistent Volumes and a user creates Persistent Volume Claims to use the storage. Once the Persistent Volume Claims are created, Kubernetes binds the Persistent Volumes to Claims based on the request and properties set on the volume.
+
+Every Persistent Volume Claim is bound to a single Persistent volume.
+
+if there are multiple possible matches for a single claim, and you would like to specifically use a particular Volume, you could still use labels and selectors to bind to the right volumes.
+Smaller Claim may get bound to a larger volume if all the other criteria matches and there are no better options. There is a one-to-one relationship between Claims and Volumes, so no other claim can utilize the remaining capacity in the volume.
+
+If there are no volumes available the Persistent Volume Claim will remain in a pending state, until newer volumes are made available to the cluster. Once newer volumes are available the claim would automatically be bound to the newly available volume.
+
 ```yml
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1775,6 +1781,42 @@ spec:
   resources:
     requests:
       storage: 500Mi
+```
+
+#### Questions - Persistant Volumes
+
+- Create a Persistent Volume with the given specification.
+Volume Name: pv-log; Storage: 100Mi; Access Modes: ReadWriteMany; Host Path: /pv/log; Reclaim Policy: Retain
+
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-log
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain 
+  hostPath:
+    path: /pv/log
+```
+
+- Let us claim some of that storage for our application. Create a Persistent Volume Claim with the given specification.
+Persistent Volume Claim: claim-log-1; Storage Request: 50Mi; Access Modes: ReadWriteMany
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: claim-log-1
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Mi
 ```
 
 #### Networks
@@ -1835,28 +1877,6 @@ spec:
   resources:
     requests:
       storage: 500Mi
-```
-
-```yml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: random-number-generator
-spec:
-  containers:
-  - name: alpine
-    image: alpine
-    command: ["/bin/sh", "-c"]
-    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
-    
-    volumeMounts:
-    - mountPAth: /opt
-      name: data-volume
-      
-  volumes:
-  - name: data-volume
-    persistentVolumeClaim:
-      claimName: myClaim
 ```
 
 #### Questions - Storage Class
