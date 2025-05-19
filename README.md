@@ -1819,6 +1819,59 @@ spec:
       storage: 50Mi
 ```
 
+#### Storage Classes
+- Static provisioning: Before creating any Persistent Volume we need to manually create the relevant disk 
+- Dynamic provisioning: Volume gets provisioned automatically when the application needs it. You can use Storage classes for this
+
+When you use StorageClass objects you no longer needs a PersistentVolume object.
+```yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: google-storage
+provisioner: kubernetes.io/gce-pd
+```
+
+```yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myClaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: google-storage
+  resources:
+    requests:
+      storage: 500Mi
+```
+
+```yml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: random-number-generator
+spec:
+  containers:
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh", "-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    volumeMounts:
+    - mountPath: /opt
+      name: data-volume
+  volumes:
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: myClaim
+```
+
+#### Questions - Storage Class
+```cmd
+- How many StorageClasses exist in the cluster right now?
+kubectl get sc
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -1850,40 +1903,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Storage Classes
-- Static provisioning
-  - Before creating any Persistent Volume we need to manually create the relevant disk 
-- Dynamic provisioning
-  - Volume gets provisioned automatically when the application needs it. You can use Storage classes for this
-
-```yml
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: google-storage
-provisioner: kubernetes.io/
-```
-
-```yml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: myClaim
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: google-storage
-  resources:
-    requests:
-      storage: 500Mi
-```
-
-#### Questions - Storage Class
-```cmd
-- How many StorageClasses exist in the cluster right now?
-kubectl get sc
-```
 
 #### Stateful Sets
 - If the instances need a particular order and a name you can use statefulsets
