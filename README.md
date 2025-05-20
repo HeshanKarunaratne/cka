@@ -1872,6 +1872,44 @@ spec:
 kubectl get sc
 ```
 
+#### Stateful Sets
+
+When working with deployments PODs come up with random names. If the instances need a particular order and a name you can use statefulsets. With statefulsets PODs are created in a sequencial order. After the first POD is deployed, it must be in running and ready state before the next POD is deployed. To enable continuous replication you can point the slaves to the master. Even if the master fails and the POD is recreated, it would still come up with the same name. `podManagementPolicy: Parallel` add this to make the statefulset not follow the ordered approach(default value is OrderedReady)
+
+```yml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: 
+  name: mysql
+  labels: 
+    app: mysql
+spec: 
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mysql
+  serviceName: mysql-h
+```
+
+```cmd
+- Scale up a statefulset
+kubectl scale statefulset mysql --replicase=5
+
+- Scale down a statefulset
+kubectl scale statefulset mysql --replicase=3
+
+- Delete a statefulset
+kubectl delete statefulset mysql
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -1903,40 +1941,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Stateful Sets
-- If the instances need a particular order and a name you can use statefulsets
-- podManagementPolicy: Parallel: add this to make the statefulset not follow the ordered approach(default value is OrderedReady)
-```yml
-apiVersion: apps/v1
-kind: StatefulSet
-metadata: 
-  name: mysql
-  labels: 
-    app: mysql
-spec: 
-  template:
-    metadata:
-      labels:
-        app: mysql
-    spec:
-      containers:
-        - name: mysql
-          image: mysql
-  replicas: 3
-  selector:
-    matchLabels:
-      app: mysql
-  serviceName: mysql-h
-  podManagementPolicy: Parallel
-```
-
-```cmd
-kubectl create -f statefulset-definition.yml
-kubectl scale statefulset mysql --replicase=5
-kubectl scale statefulset mysql --replicase=3
-kubectl delete statefulset mysql
-```
 
 #### Headless Services
 
