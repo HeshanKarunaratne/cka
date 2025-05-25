@@ -1981,6 +1981,46 @@ When the statefulset is created, it creates the first pod and during the creatio
 
 StatefulSets doesn't automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees stable storage for pods.
 
+#### Dockerfile
+Dockerfile contains instructions and arguments
+
+```Dockerfile
+FROM ubuntu
+
+RUN apt-get update
+RUN apt-get install python
+
+RUN pip install flask
+RUN pip install flask-mysql
+
+COPY . /opt/source-code
+
+ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
+```
+
+```cmd
+- Build the image using the Dockerfile. This will create an image locally on your system
+docker build Dockerfile -t <DOCKER_ACCOUNT_USERNAME>/<IMAGE_NAME>
+
+- To make it available on the public Docker Hub registry
+docker push <DOCKER_ACCOUNT_USERNAME>/<IMAGE_NAME>
+```
+
+#### Questions - Docker images
+```cmd
+- How many images are available on this host?
+docker images
+
+- Build a docker image using the Dockerfile and name it webapp-color. No tag to be specified?
+docker build -t webapp-color .
+
+- Run an instance of the image webapp-color and publish port 8080 on the container to 8282 on the host
+docker run -p 8282:8080 webapp-color
+
+- What is the base Operating System used by the python:3.6 image?
+docker run python:3.6 cat /etc/*release*
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -2012,32 +2052,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Dockerfile
-- Dockerfile contains instructions and arguments
-
-```Dockerfile
-FROM ubuntu
-
-RUN apt-get update
-RUN apt-get install python
-
-RUN pip install flask
-RUN pip install flask-mysql
-
-COPY . /opt/source-code
-
-ENTRYPOINT FLASK_APP=/opt/source-code/app.py flask run
-```
-
-#### Questions - Docker images
-```cmd
-- Build a docker image using the Dockerfile and name it webapp-color. No tag to be specified?
-docker build -t webapp-color .
-
-- What is the base Operating System used by the python:3.6 image?
-docker history python:3.6
-```
 
 #### Authentication and Authorization
 - kube-apiserver is at the center of all opearions within kubernetes.
