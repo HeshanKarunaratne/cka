@@ -1973,6 +1973,14 @@ spec:
   serviceName: mysql-h
 ```
 
+#### Storage and StatefulSet
+
+If we need underlying all pods to share the same database storage we can do that. But for each pod to have a seaparate storage? Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SCs. Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulset-definition which is an array.
+
+When the statefulset is created, it creates the first pod and during the creation of the pod, a PVC is created. The PVC is associated to a storage class so the storage class provisions a volume on GCP and then creates a PV and associates the PV with a volume and binds the PVC to the PV.
+
+StatefulSets doesn't automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees stable storage for pods.
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -2004,13 +2012,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Storage and StatefulSet
-- If we need underlying all pods to share the same database storage we can do that. But for each pod to have a seaparate storage? 
-- Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SC
-- Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulset-definition
-- StatefulSets doesnt automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees statusful storage for pods
-
 
 #### Dockerfile
 - Dockerfile contains instructions and arguments
