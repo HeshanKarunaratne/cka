@@ -2021,6 +2021,46 @@ docker run -p 8282:8080 webapp-color
 docker run python:3.6 cat /etc/*release*
 ```
 
+#### Authentication and Authorization
+
+kube-apiserver is at the center of all opearions within Kubernetes. Controlling access to the api-server is the first line of defense. Who can access the cluster and What can they do?
+
+Who can access the server
+  1. Username and Passwords
+  2. Username and Tokens
+  3. Certificates
+  4. LDAP Authentication providers
+  5. Service Accounts
+
+What can they do
+  1. RBAC Authorizarion
+  2. ABAC Authorization
+  3. Node Authorization
+  4. Webhook mode
+
+#### Authentication
+
+Admins access the cluster to perform administrative tasks, developers access the cluster to test or deploy applications, end users who access the applications deployed on the cluster,
+and third party applications accessing the cluster for integration purposes. All user access is managed by the API server. Whether you are accessing the cluster through `kubectl tool` or the `API directly`. `All of these requests go through the kube-apiserver and it authenticates the requests before processing it`.
+
+1. Static Password File
+
+Create a user-details.csv where you have a list of users with their password, username and userid. Pass it to the kube-apiserver.service file as `--basic-auth-file=user-details.csv`
+
+If you setup the cluster using the Kube ADM tool, then you should modify the Kube API server pod definition file. Kube ADM tool will automatically restart the Kube API server once you update the file.
+
+2. Static Token File
+
+Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid. Add it to kube-apiserver.service file as `--token-auth-file=user-token-details.csv`
+
+While authenticating, specify the token as an authorization bearer token to your request like `curl -v -k https://master-node-ip:6443/api/v1/pods --header "Authorization: Bearer <TOKEN>"`
+
+`These are not a recommended authentication mechanism.`
+
+3. Certificates
+
+4. Identity Servers
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -2052,35 +2092,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Authentication and Authorization
-- kube-apiserver is at the center of all opearions within kubernetes.
-- We need to see who can access the api-server and what can they do
-- We can access using
-  1. Username and Passwords
-  2. Username and Tokens
-  3. Certificates
-  4. LDAP Authentication providers
-  5. Service Accounts
-
-- Authroization is implemented using
-  1. RBAC Authorizarion
-  2. ABAC Authorization
-  3. Node Authorization
-  4. Webhook mode
-
-#### Authentication
-- Mainly Users(Admins and Developers) and ServiceAccounts
-- All user access is managed by the API server
-- Whether you are accessing the cluster through kubectl tool or the API directly all these requests go through the kube-apiserver and it authenticates the requests before processing it
-
-1. Username Password mechanism
-- Create a user-details.csv where you have a list of users with their password, name and userid
-- Add it to kube-apiserver.service file as below `--basic-auth-file=user-details.csv`
-
-2. User Token mechanism
-- Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid
-- Add it to kube-apiserver.service file as below `--token-auth-file=user-token-details.csv`
 
 #### KubeConfig
 
