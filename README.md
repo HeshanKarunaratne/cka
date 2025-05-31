@@ -2061,6 +2061,72 @@ While authenticating, specify the token as an authorization bearer token to your
 
 4. Identity Servers
 
+#### KubeConfig
+
+Client uses the certificate file and key to query the Kubernetes REST API for a list of pods using curl using `curl https://my-kube-playground:6443/api/v1/pods --key admin.key --cert admin.crt --cacert ca.crt`
+
+We can use kubectl command using `kubectl get pods --server my-kube-playground:6443 --client-key admin.key --client-certificate admin.crt --certificate-authority ca.crt` 
+
+Typing these commands everytime is a tedious task, so we move these to a configuration file called as kubeconfig and using `kubectl get pods --kubeconfig config`. By default, the kubectl tool looks for a file named `config` under a directory `.kube` under the users home directory. If we create the config file there then we dont need to explicitly add it in the kubectl command.
+
+The kubeconfig file has 3 specific sections
+1. Clusters: Can be different environments or organizations or providers. `--server my-kube-playground:6443` specification goes into the cluster section
+2. Users: Different user accounts which have access to these clusters. `--client-key admin.key --client-certificate admin.crt --certificate-authority ca.crt` specifications goes into the user section
+3. Contexts: Binds user account with a cluster 
+
+```yml
+apiVersion: v1
+kind: Config
+
+current-context: my-kube-admin@my-kube-playground
+
+clusters:
+- name: my-kube-playground
+  cluster:
+    certificate-authority: ca.crt
+    server: https://my-kube-playground:6443
+
+contexts:
+- name: my-kube-admin@my-kube-playground
+  context:
+    cluster: my-kube-playground
+    user: my-kube-admin
+
+users:
+- name: my-kube-admin
+  user:
+    client-certificate: admin.crt
+    client-key: admin.key
+```
+
+Once this file is ready we dont need to create any object like we usually do. The file is left as is, and is read by the kubectl command and the required values are used.
+
+```cmd
+- View the current config file
+kubectl config view
+
+- View the given config file
+kubectl config view --kubeconfig=my-custom-config
+
+- Change the current context
+kubectl config use-context user@prod
+```
+
+#### Questions - KubeConfig
+```cmd
+- Where is the default kubeconfig file located in the current environment?
+$HOME/.kube/config
+
+- How many clusters are defined in the default kubeconfig file?
+kubectl config view
+
+- A new kubeconfig file named my-kube-config is created. It is placed in the /root directory. How many clusters are defined in that kubeconfig file?
+kubectl config view --kubeconfig=my-kube-config
+
+- I would like to use the dev-user to access test-cluster-1. Set the current context to the right one so I can do that?
+kubectl config --kubeconfig=my-kube-config use-context research
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -2092,76 +2158,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### KubeConfig
-
-```cmd
-kubectl get pods 
-                --server $server_address 
-                --client-key admin.key 
-                --client-certificate admin.crt 
-                --certificate-authority ca.crt
-```
-- Typing these commands everytime is a tedious task, so we move these to a configuration file called kubeconfig
-
-```cmd
-kubectl get pods --kubeconfig config
-
-// View the current config
-kubectl config view
-
-// View the given config
-kubectl config view --kubeconfig=my-custom-config
-
-// Change the current context
-kubectl config use-context user@prod 
-```
-
-- If you create the config file in $HOME/.kube/config location(which is the default path for the config file) you dont need to explicitly add the --kubeconfig config in above command as well
-- config file has 3 sections
-  - clusters - varies k8s clusters that you have access to (in above --server)
-  - Users - User accounts which have access to these clusters (in above except --server belongs to here)
-  - Contexts - Binds which user account is avaiable for which cluster
-
-```yml
-apiVersion: v1
-kind: Config
-
-current-context: my-kube-admin@my-kube-playground
-
-clusters:
-- name: my-kube-playground
-  cluster:
-    certificate-authority: ca.crt
-    server: https://my-kube-playground:6443
-
-contexts:
-- name: my-kube-admin@my-kube-playground
-  context:
-    cluster: my-kube-playground
-    user: my-kube-admin
-
-users:
-- name: my-kube-admin
-  user:
-    client-certificate: admin.crt
-    client-key: admin.key
-```
-
-#### Questions - KubeConfig
-```cmd
-- Where is the default kubeconfig file located in the current environment?
-$HOME/.kube/config
-
-- How many clusters are defined in the default kubeconfig file?
-kubectl config view
-
-- A new kubeconfig file named my-kube-config is created. It is placed in the /root directory. How many clusters are defined in that kubeconfig file?
-kubectl config view --kubeconfig=my-kube-config
-
-- I would like to use the dev-user to access test-cluster-1. Set the current context to the right one so I can do that?
-kubectl config --kubeconfig=my-kube-config use-context research
-```
 
 #### API Groups
 - APIs are categorized into 2 groups
