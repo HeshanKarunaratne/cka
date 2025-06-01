@@ -2120,12 +2120,45 @@ $HOME/.kube/config
 - How many clusters are defined in the default kubeconfig file?
 kubectl config view
 
+- How many users are defined in the default kubeconfig file?
+kubectl config view
+
+- How many contexts are defined in the default kubeconfig file?
+kubectl config view
+
 - A new kubeconfig file named my-kube-config is created. It is placed in the /root directory. How many clusters are defined in that kubeconfig file?
 kubectl config view --kubeconfig=my-kube-config
 
 - I would like to use the dev-user to access test-cluster-1. Set the current context to the right one so I can do that?
-kubectl config --kubeconfig=my-kube-config use-context research
+kubectl config --kubeconfig=my-kube-config use-context dev-user@test-cluster-1
 ```
+
+#### API Groups
+APIs are mainly categorized into 2 groups
+1. Core group: /api
+- All the core functionality is maintained. 
+  
+  eg: namespaces, pods, rc, events, nodes, PV, PVC, configmaps, secrets, services, endpoints, bindings
+
+2. Named group: /apis
+- More organized and all the newer features are going to be made available through these named groups
+
+    /apps -> /deployments, /replicasets, /statefulsets
+
+    /extensions
+
+    /networking.k8s.io -> /v1 -> /networkpolicies
+
+    /storage.k8s.io
+
+    /authentication.k8s.io
+
+    /certificates.k8s.io -> /v1 -> /certificatesigningrequests
+
+`kubectl proxy` Starts a proxy server on port 8001 locally and user credentials and certificates from your kubeconfig file to access the cluster. `curl http://localhost:8001 -k`
+So the proxy will use the credentials from the kubeconfig file to forward the request to the kube API server.
+
+`kube proxy` is used to enable connectivity between pods and services across different nodes in the cluster. `kubectl proxy` is an http proxy service created by Kube control utility to access the Kube API server.
 
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
@@ -2158,28 +2191,6 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### API Groups
-- APIs are categorized into 2 groups
-  - Core group: /api
-    - All the core functionality is maintained. 
-      - eg: namespaces, pods, rc, nodes, PV, PVC, configmaps, secrets, services
-  - Named group: /apis
-    - More organized and all the newer features are going to be made available through these named groups
-      - eg: /apps, /extensions, /networking.k8s.io, /storage.k8s.io, /authentication.k8s.io, /certificates.k8s.io
-
-
-```cmd
-curl http://localhost:6443 -k
-
-curl http://localhost:6443/apis -k | grep "name"
-
-kubectl proxy
-// starts a proxy server on port 8001 locally and user credentials and certificates from your kubeconfig file to access the cluster
-
-curl http://localhost:8001 -k
-So the proxy will use the credentials from the kubeconfig file to forward the request to the kube API server
-```
 
 #### Authorization
 - Below are the different way to of authorizing in Kubernetes
