@@ -2160,6 +2160,109 @@ So the proxy will use the credentials from the kubeconfig file to forward the re
 
 `kube proxy` is used to enable connectivity between pods and services across different nodes in the cluster. `kubectl proxy` is an http proxy service created by Kube control utility to access the Kube API server.
 
+#### Authorization
+Below are the different way to of authorizing in Kubernetes
+1. Node Authorization
+2. ABAC: Attribute Bases Authorization
+  - You need to edit the policy file everytime you need to make change and restart the kube API server
+  - `{ "kind": "Policy", "spec": { "user": "dev-user", "namesapce": "*", "resource": "pods", "apiGroup": "*" } }`
+  - Because of that ABAC configurations are difficult to manage
+3. RBAC: Role Based Authorization
+  - With RBAC instead of directly associating a user or a group with a set of permissions, we define a role
+4. Webhook
+  - If you want to manage the authorization externally and not through built in mechanisms
+    - ex: Open Policy Agent
+5. AlwaysAllow and AlwaysDeny
+  - `--authorization-mode=AlwaysAllow` can be configured on the kube API server. Default value is `AlwaysAllow`
+  - You can have multiple modes configured by separating with a comma `--authorization-mode=Node, RBAC,Webhook`. All the requests are authorized in the order it is specified. If a module denies the request it is passed to the next module in the chain.
+
+#### RBAC
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: 
+  name: developer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list", "get", "create", "update", "delete"]
+- apiGroups: [""]
+  resources: ["ConfigMap"]
+  verbs: ["create"]
+```
+
+Next we want to link a user to the role. For that we create role bindings.
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: 
+  name: devuser-developer-binding
+subjects:
+- kind: User
+  name: dev-user
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: developer
+  apiGroup: rbac.authorization.k8s.io
+```
+
+Roles and Role Bindings fall under the scope of namespaces. So here the dev-user gets access to pods and config maps within the default namespace.
+
+```cmd
+- View roles
+kubectl get roles
+
+- View role bindings
+kubectl get rolebindings
+
+- View more details of a given role
+kubectl describe role <ROLE_NAME>
+
+- View more details of a given role binding
+kubectl describe rolebinding <ROLE_BINDING_NAME>
+
+- Check access
+kubectl auth can-i create deployments
+
+- Check access as a created user
+kubectl auth can-i create deployments --as dev-user
+```
+
+You can give access to specific resources as well
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: 
+  name: developer
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["list", "get", "create", "update", "delete"]
+  resourceNames: ["blue", "orange"]
+```
+
+#### Questions - RBAC
+```cmd
+- Inspect the environment and identify the authorization modes configured on the cluster?
+kubectl describe pod kube-apiserver-controlplane --namespace kube-system
+
+- How many roles exist in the default namespace?
+kubectl get roles
+
+- How many roles exist in all namespaces together?
+kubectl get roles -A
+
+- What are the resources the kube-proxy role in the kube-system namespace is given access to?
+kubectl describe role kube-proxy --namespace kube-system
+
+- A user dev-user is created. User's details have been added to the kubeconfig file. Inspect the permissions granted to the user. Check if the user can list pods in the default namespace?
+kubectl auth can-i list pods --as dev-user
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
@@ -2191,11 +2294,3 @@ docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-
     - External
       - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
       - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
-
-#### Authorization
-- Below are the different way to of authorizing in Kubernetes
-  - Node
-  - ABAC: Attribute Bases Authorization
-    - You need to edit the policy file everytime you need to make change and restart the kube API server
-  - RBAC: Role Based Authorization
-  - Webhook
