@@ -2249,6 +2249,8 @@ rules:
 ```cmd
 - Inspect the environment and identify the authorization modes configured on the cluster?
 kubectl describe pod kube-apiserver-controlplane --namespace kube-system
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+ps -aux | grep authorization
 
 - How many roles exist in the default namespace?
 kubectl get roles
@@ -2261,7 +2263,47 @@ kubectl describe role kube-proxy --namespace kube-system
 
 - A user dev-user is created. User's details have been added to the kubeconfig file. Inspect the permissions granted to the user. Check if the user can list pods in the default namespace?
 kubectl auth can-i list pods --as dev-user
+kubectl get pods --as dev-user
+
+- Create the necessary roles and role bindings required for the dev-user to create,list and delete pods in the default namespace?
+kubectl create role developer --verb=list,create,delete --resource=pods
+kubectl create rolebinding dev-user-binding --role=developer --user=dev-user
 ```
+
+#### Cluster Roles
+
+Roles and RoleBindings are namespaced. If you dont specify a namespace they are created in the default namespace and control access within that namespace alone. Can you group or isolate nodes within the namespace? Those are cluster wide or cluster scoped resources.
+
+Resources are categorized as either namespaced or cluster scoped. To view the list of namespaced and non namespaced resourced use `kubectl api-resources --namespaced=true`
+We use clusterroles and clusterrolebindings to authorize access to cluster scoped resources.
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata: 
+  name: cluster-administrator
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["list", "get", "create", "update", "delete"]
+```
+
+```yml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata: 
+  name: cluster-admin-role-binding
+subjects:
+- kind: User
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: cluster-administrator
+  apiGroup: rbac.authorization.k8s.io
+```
+
+You can create a cluster role for namespaced resources as well. When you do that, the user will have access to these resources across all name spaces.
 
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
