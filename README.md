@@ -2305,6 +2305,32 @@ roleRef:
 
 You can create a cluster role for namespaced resources as well. When you do that, the user will have access to these resources across all name spaces.
 
+#### Questions - Cluster Roles
+```cmd
+- How many ClusterRoles do you see defined in the cluster?
+kubectl get clusterroles --no-headers | wc -l
+
+- How many ClusterRolesBindings do you see defined in the cluster?
+kubectl get clusterrolebindings --no-headers | wc -l
+
+- What namespace is the cluster-admin clusterrole part of?
+Cluster Roles are cluster wide and not part of any namespace
+
+- What user/groups are the cluster-admin role bound to?
+kubectl describe clusterrolebindings cluster-admin
+
+- A new user michelle joined the team. She will be focusing on the nodes in the cluster. Create the required ClusterRoles and ClusterRoleBindings so she gets access to the nodes?
+kubectl create clusterrole michelle-role --verb=list,create,delete --resource=nodes
+kubectl create clusterrolebinding michelle-binding --clusterrole=michelle-role --user=michelle
+kubectl auth can-i list nodes --as michelle
+
+- michelle's responsibilities are growing and now she will be responsible for storage as well. Create the required ClusterRoles and ClusterRoleBindings to allow her access to Storage.
+ClusterRole: storage-admin; Resource: persistentvolumes; Resource: storageclasses; ClusterRoleBinding: michelle-storage-admin; ClusterRoleBinding Subject: michelle; ClusterRoleBinding Role: storage-admin;
+kubectl create clusterrole storage-admin --verb=* --resource=persistentvolumes,storageclasses
+kubectl create clusterrolebinding michelle-storage-admin --clusterrole=storage-admin --user=michelle
+kubectl auth can-i list storageclasses --as michelle
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
