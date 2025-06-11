@@ -2324,11 +2324,34 @@ kubectl create clusterrole michelle-role --verb=list,create,delete --resource=no
 kubectl create clusterrolebinding michelle-binding --clusterrole=michelle-role --user=michelle
 kubectl auth can-i list nodes --as michelle
 
-- michelle's responsibilities are growing and now she will be responsible for storage as well. Create the required ClusterRoles and ClusterRoleBindings to allow her access to Storage.
+- Michelle's responsibilities are growing and now she will be responsible for storage as well. Create the required ClusterRoles and ClusterRoleBindings to allow her access to Storage.
 ClusterRole: storage-admin; Resource: persistentvolumes; Resource: storageclasses; ClusterRoleBinding: michelle-storage-admin; ClusterRoleBinding Subject: michelle; ClusterRoleBinding Role: storage-admin;
 kubectl create clusterrole storage-admin --verb=* --resource=persistentvolumes,storageclasses
 kubectl create clusterrolebinding michelle-storage-admin --clusterrole=storage-admin --user=michelle
 kubectl auth can-i list storageclasses --as michelle
+```
+
+#### Admission Controllers
+
+What if we want to achieve below scenarios,
+  - Only permit images from certain registry
+  - Not permit runAs root user
+  - Permit certain capabilities
+  - To always have labels
+These are some of the things that we cant achieve with the existing role based access controls and thats where `admission controllers` comes in. Admission controllers help us implement better security measures to enforce how a cluster is used.
+
+`kube-apiserver -h | grep enable-admission-plugins` to view all the admission controllers.
+
+#### Questions - Admission Controllers
+```cmd
+- What is not a function of admission controller?
+Authenticate user
+
+- What is not a function of admission controller?
+NamespaceAutoProvision
+
+- What is not a function of admission controller?
+NodeRestriction
 ```
 
 #### Networks
