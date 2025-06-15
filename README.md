@@ -2347,11 +2347,46 @@ These are some of the things that we cant achieve with the existing role based a
 - What is not a function of admission controller?
 Authenticate user
 
-- What is not a function of admission controller?
-NamespaceAutoProvision
+- Which admission controller is not enabled by default?
+kubectl exec -it kube-apiserver-controlplane -n kube-system -- kube-apiserver -h | grep 'enable-admission-plugins'
+NamespaceAutoProvision is not enabled by default
 
-- What is not a function of admission controller?
-NodeRestriction
+- Which admission controller is enabled in this cluster which is normally disabled?
+grep enable-admission-plugins /etc/kubernetes/manifests/kube-apiserver.yaml
+NodeRestriction is not enabled by default
+```
+
+#### Validating & Mutating Admission Controllers
+
+NamespaceExists admission controller - It can help validate if a namespace already exists and reject the request if it doesn't exist. This is a validating admission controller.
+
+DefaultStorageClass admission controller - Will watch for any request to create a PVC and check if it has a StorageClass mentioned in it. If its not it will modify the request and add `storageClassName: default`. This is a mutating admission controller. It can change or mutate the object itself before it is created.
+
+Mutating admission controllers are run first followed by validating admission controllers.
+  - NamespaceAutoProvision is executed before NamespaceExists admission controller
+
+To support external admission controllers there are two special admission controllers available.
+  1. MutatingAdmission Webhook
+  2. ValidatingAdmission Webhook
+
+We can configure these webhooks to point to a server thats hosted either within the kubernetes cluster or outside it, and our server will have our own admission webhook service running with our own code and logic. Once the request hits the webhook, it makes a call to the admission webhook server bypassing in an `admission review object` in a json format. On receiving the request, the admission webhook server responds with a result of whether the request is allowed or not.
+
+Example ValidatingAdmission Webhook
+```yml
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata: 
+  name: pod-policy-example
+webhooks:
+- name: pod-policy-example
+  clientConfig:
+    url: "https://external-server.example.com"
+  rules:
+  - apiGroups: [""]
+    apiVersions: ["v1"]
+    operations: ["CREATE"]
+    resources: ["pods"]
+    scope: "Namespaced"
 ```
 
 #### Networks
