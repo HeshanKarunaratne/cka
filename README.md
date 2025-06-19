@@ -2389,6 +2389,22 @@ webhooks:
     scope: "Namespaced"
 ```
 
+#### Questions - Validating & Mutating Admission Controllers
+```cmd
+- Which of the below combination is correct for Mutating and validating admission controllers?
+NamespaceAutoProvision - Mutating, NamespaceExists - Validating
+
+- What is the flow of invocation of admission controllers?
+First Mutating then Validating
+
+- Create namespace webhook-demo where we will deploy webhook components
+kubectl create ns webhook-demo
+
+- Create TLS secret webhook-server-tls for secure webhook communication in webhook-demo namespace. We have already created below cert and key for webhook server which should be used to create secret. Certificate : /root/keys/webhook-server-tls.crt; Key : /root/keys/webhook-server-tls.key
+kubectl create secret tls webhook-server-tls --cert=/root/keys/webhook-server-tls.crt --key
+=/root/keys/webhook-server-tls.key --namespace webhook-demo
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
