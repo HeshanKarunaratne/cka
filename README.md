@@ -2405,6 +2405,15 @@ kubectl create secret tls webhook-server-tls --cert=/root/keys/webhook-server-tl
 =/root/keys/webhook-server-tls.key --namespace webhook-demo
 ```
 
+#### API Versions
+
+When an API group is at V1 that means it is a generally available stable version.
+
+When you have multiple versions enabled and you run the `kubectl get deployment` command which version is the command going to query? Thats defined by the preferred version. When you execute `kubectl explain` command, the version that it returns is the preferred API version. 
+
+Also when multiple versions are available, only one version can be the storage version. This means if any object is created with the API version set to anything other than the storage version, then those will be converted to the storage version which is V1 before storing to the etcd database.
+
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
