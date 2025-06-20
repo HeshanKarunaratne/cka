@@ -2413,6 +2413,40 @@ When you have multiple versions enabled and you run the `kubectl get deployment`
 
 Also when multiple versions are available, only one version can be the storage version. This means if any object is created with the API version set to anything other than the storage version, then those will be converted to the storage version which is V1 before storing to the etcd database.
 
+#### API Deprecations
+
+Policy Rule 1: API elements may only be removed by incrementing the version of the API group.
+
+Policy Rule 2: API objects must be able to round trip between API versions in a given release without information loss, with the exception of whole REST resources that do not exist in some versions.
+
+Policy Rule 3: An API version in a given track may not be deprecated until a new API version at least as stable is released.
+
+Policy Rule 4a: Other than the most recent API versions in each track, older API versions must be supported after their announced deprecation for a duration of no less than:
+  
+  - GA: 12 months or 3 releases
+  - Beta: 9 months or 3 releases
+  - Alpha: 0 releases
+
+Policy Rule 4b: The "preferred" API version and the "storage version" for a given group may not advance until after a release has been made that supports both the new version and the previous version
+
+```cmd
+Convert old manifest file to new manifests with latest version
+kubectl convert -f <OLD_FILE> --output-version <NEW_API>
+kubectl convert -f nginx.yaml --output-version apps/v1
+```
+
+#### Questions - API versions/deprecations
+```cmd
+- Identify the short names of the deployments, replicasets, cronjobs and customresourcedefinitions?
+kubectl api-resources
+
+- Identify which API group a resource called job is part of?
+kubectl explain job
+
+- What is the preferred version for authorization.k8s.io api group?
+kubectl proxy 8081&
+curl localhost:8001/apis/authorization.k8s.io
+```
 
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
