@@ -2448,6 +2448,68 @@ kubectl proxy 8081&
 curl localhost:8001/apis/authorization.k8s.io
 ```
 
+#### Custom Resource Definitions
+
+You cant simply create any resource that you want without configuring it in the Kubernetes API. So first we need to define what resource that we want to create. We are going to use CRD to tell Kubernetes that we like to create objects of kind X going forward. CRD is a similar object with API version, kind, metadata and spec. You can add specific schema and validations as well through the CRD.
+
+```yml
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: 
+  name: flighttickets.flights.com
+spec:
+  scope: Namespaced
+  group: flights.com
+  names:
+    kind: FlightTicket
+    singular: flightticket
+    plural: flighttickets
+    shortNames:
+    - ft
+  versions:
+    - name: v1
+      served: true
+      storage: true
+  schema:
+    openAPIV3Schema:
+      type: object
+      properties:
+        spec:
+          type: object
+          properties:
+            from:
+              type: string
+            to:
+              type: string
+            number:
+              type: integer
+              minimum: 1
+              maximum: 10
+```
+
+```yml
+apiVersion: flights.com/v1
+kind: FlightTicket
+metadata: 
+  name: my-flight-ticket
+spec:
+  from: Mumbai
+  to: London
+  number: 2
+```
+
+#### Questions - Custom Resource Definitions
+```cmd
+- CRD Object can be either namespaced or cluster scoped. Is this statement true or false?
+true
+
+- What are the properties given to the CRD’s called collectors.monitoring.controller?
+kubectl describe crd <CRD_NAME>
+
+- What is the short name given to the CRD globals.traffic.controller ?
+kubectl describe crd <CRD_NAME>
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
