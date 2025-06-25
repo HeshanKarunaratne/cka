@@ -2510,6 +2510,10 @@ kubectl describe crd <CRD_NAME>
 kubectl describe crd <CRD_NAME>
 ```
 
+#### Custom Controllers
+
+We need to monitor the status of the objects in ETCD and perform actions such as making calls to the flight booking API to book, edit or cancel flight tickets. For that we need a custom controller. A controller is any process or code that runs in a loop and is continuously monitoring the kubernetes cluster and listening to events of specific objects being changed.
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
