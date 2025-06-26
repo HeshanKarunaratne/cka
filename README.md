@@ -1341,7 +1341,7 @@ Job: While a ReplicaSet is used to make sure a specified number of PODs are runn
 
 ```yml
 apiVersion: batch/v1
-kind: Jobi
+kind: Job
 metadata: 
   name: math-add-job
 spec:
@@ -2513,6 +2513,84 @@ kubectl describe crd <CRD_NAME>
 #### Custom Controllers
 
 We need to monitor the status of the objects in ETCD and perform actions such as making calls to the flight booking API to book, edit or cancel flight tickets. For that we need a custom controller. A controller is any process or code that runs in a loop and is continuously monitoring the kubernetes cluster and listening to events of specific objects being changed.
+
+#### Deployment Strategy - Blue Green
+
+Blue Green deployment strategy where the new versions are deployed alongside the old versions. So the old version is called blue, and the new version is called green and 100% of the traffic is still routed to the old version. At this point in time tests are run on the new version. And once all tests are passed, we switch traffic to the new version all at once.
+
+myapp-blue.yaml
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: myapp-blue
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        version: v1
+  
+    spec:
+      containers:
+        - name: app-container
+          image: myapp-image:1.0
+  replicas: 3
+  selector:
+    matchLabels:
+      version: v1
+```
+
+service-definition.yaml
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: my-service
+spec: 
+  selector:
+    version: v1
+```
+
+myapp-green.yaml
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: myapp-green
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        version: v2
+  
+    spec:
+      containers:
+        - name: app-container
+          image: myapp-image:2.0
+  replicas: 3
+  selector:
+    matchLabels:
+      version: v2
+```
+
+service-definition.yaml
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: my-service
+spec: 
+  selector:
+    version: v2
+```
 
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
