@@ -2592,6 +2592,77 @@ spec:
     version: v2
 ```
 
+#### Deplyment Strategy - Canary
+
+In this strategy we deploy the new version and route only a small percentage of traffic to it. Then we run tests and if everything looks good, we upgrade the original deployment with the newer version of the application. That could be done with a rolling upgrade strategy. Then we get rid of canary deployment.
+
+Service meshes like Istio comes with better control because you can define the exact percentage of traffic to be distributed between each deployment, and its not really dependent upon the number of pods in a deployment.
+
+myapp-primary.yaml
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: myapp-primary
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        version: v1
+        app: front-end 
+    spec:
+      containers:
+        - name: app-container
+          image: myapp-image:1.0
+  replicas: 5
+  selector:
+    matchLabels:
+      app: front-end
+```
+
+service-definition.yaml
+```yml
+apiVersion: v1
+kind: Service
+metadata: 
+  name: my-service
+spec: 
+  selector:
+    app: front-end
+```
+
+myapp-canary.yaml
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: myapp-canary
+  labels: 
+    app: myapp
+    type: front-end
+spec: 
+  template:
+    metadata:
+      name: myapp-pod
+      labels:
+        version: v2
+        app: front-end 
+    spec:
+      containers:
+        - name: app-container
+          image: myapp-image:2.0
+  replicas: 1
+  selector:
+    matchLabels:
+      app: front-end
+```
+
+We only want to send a small percentage of traffic to it. So we deploy a single container only and so we set the replicas count to one. We need to route the traffic from the same service to both the deployments. We make sure that we use the same labels and selector combination under the pod spec labels to match what is already in the service definition.
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
