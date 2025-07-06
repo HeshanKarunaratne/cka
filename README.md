@@ -2663,6 +2663,52 @@ spec:
 
 We only want to send a small percentage of traffic to it. So we deploy a single container only and so we set the replicas count to one. We need to route the traffic from the same service to both the deployments. We make sure that we use the same labels and selector combination under the pod spec labels to match what is already in the service definition.
 
+#### Questions - Deployment Strategies
+```cmd
+- A deployment has been created in the default namespace. What is the deployment strategy used for this deployment?
+kubectl describe deployment <DEPLOYMENT_NAME>
+
+- The deployment called frontend app is exposed on the NodePort via a service. Identify the name of this service?
+kubectl get svc
+
+- What is the selector used by this service?
+kubectl describe svc <SERVICE_NAME>
+
+- Scale down the v1 version of the apps to 0 replicas and scale up the new(v2) version to 5 replicas.
+kubectl scale deployment frontend --replicas=0
+kubectl scale deployment frontend-v2 --replicas=5
+
+- Now delete the deployment called frontend completely?
+kubectl delete deployments <DEPLOYMENT_NAME>
+```
+
+#### Questions - Helm Concepts
+```cmd
+- Which command is used to search for a wordpress helm chart package from the Artifact Hub?
+helm search hub wordpress
+
+- Add a bitnami helm chart repository in the controlplane node; name - bitnami; chart repo name - https://charts.bitnami.com/bitnami
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+- Which command is used to search for the joomla package from the added repository?
+helm search repo joomla
+
+- How many helm repositories are added in the controlplane node?
+helm repo list
+
+- Install drupal helm chart from the bitnami repository; Release name should be bravo; Chart name should be bitnami/drupal.
+helm install bravo bitnami/drupal
+
+- Which command is used to list packages installed using helm?
+helm list
+
+- Uninstall the drupal helm package which we installed earlier.
+helm uninstall bravo
+
+- Download the bitnami apache package under the /root directory; Note: Do not install the package. Just download it.
+helm pull --untar bitnami/apache
+```
+
 #### Networks
 IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
 
