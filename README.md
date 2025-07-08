@@ -2789,6 +2789,35 @@ a. Create a config map called 'time-config' with the data 'TIME_FREQ=10' in the 
 b. The time-check container should run the command: 'while true; do date; sleep $TIME_FREQ;done' and write the result to the location '/opt/time/time-check.log'.
 c. The path '/opt/time' on the pod should mount a volume that lasts the lifetime of this pod.
 
+kubectl create ns dvl1987
+kubectl create configmap time-config --from-literal=TIME_FREQ=10 --namespace dvl1987
+
+```pod.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: time-check
+  namespace: dvl1987
+spec:
+  containers:
+    - name: time-check
+      image: busybox
+      command: ["/bin/sh", "-c"]
+      args: ["while true; do date >> /opt/time/time-check.log; sleep $TIME_FREQ; done"]
+      env:
+        - name: TIME_FREQ
+          valueFrom:
+            configMapKeyRef:
+              name: time-config
+              key: TIME_FREQ
+      volumeMounts:
+        - name: time-volume
+          mountPath: /opt/time
+  volumes:
+    - name: time-volume
+      emptyDir: {}
+```
+
 4. Create a new deployment called 'nginx-deploy', with one single container called nginx, image 'nginx:1.16' and 4 replicas. 
 The deployment should use 'RollingUpdate' strategy with 'maxSurge=1, and maxUnavailable=2'.
 Next upgrade the deployment to version 1.17. 
