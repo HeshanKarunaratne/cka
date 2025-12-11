@@ -29,3 +29,15 @@ kubectl get pod -o wide
 # Delete a deployment
 kubectl delete deploy <DEPLOYMENT_NAME>
 ```
+
+##### Lab 2.2. Deploy a New Cluster
+```cmd
+# Download the tar.xz
+wget https://cm.lf.training/LFD259/LFD259_V2025-09-22_SOLUTIONS.tar.xz --user=LFtraining --password=Penguin2014
+
+# Update packages
+sudo apt update && sudo apt install xz-utils -y
+
+# Extract the tar.xz
+tar -xvf LFD259_V2025-09-22_SOLUTIONS.tar.xz
+```
