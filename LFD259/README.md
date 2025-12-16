@@ -79,3 +79,21 @@ kubectl describe nodes | grep -i taint
 # Remove the taints (notice the - symbol in the end)
 kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 ```
+
+##### Lab 2.3. Create a Basic Pod
+```cmd
+# Create a Pod from a yaml file
+kubectl apply -f <FILE_NAME>
+
+# View the details of the created pod
+kubectl describe pod <POD_NAME>
+
+# Delete the running pod
+kubectl delete pod <POD_NAME>
+
+# Check internal IP assigned using -o wide option
+kubectl get pods -o wide
+
+# Create service
+kubectl apply -f basicservice.yaml
+```
