@@ -97,3 +97,14 @@ kubectl get pods -o wide
 # Create service
 kubectl apply -f basicservice.yaml
 ```
+
+##### Lab 2.4. Multi Container Pods
+```cmd
+# Delete a pod
+kubectl delete pod <POD_NAME>
+
+# Create a pod
+kubectl apply -f <POD_FILE>
+
+
+```

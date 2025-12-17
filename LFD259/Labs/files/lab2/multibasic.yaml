@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: multibasic
+  labels:
+    type: webserver
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+      ports:
+        - containerPort: 80
+    - name: fdlogger
+      image: fluentd
