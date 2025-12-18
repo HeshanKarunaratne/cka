@@ -105,6 +105,31 @@ kubectl delete pod <POD_NAME>
 
 # Create a pod
 kubectl apply -f <POD_FILE>
+```
 
+##### Lab 2.5. Create a Simple Deployment
+```cmd
+# Create a Deployment
+kubectl create deployment <DEPLOYMENT_NAME> --image=nginx
 
+# Check deployments and pods created in the default namespace
+kubectl get deploy,pod\
+
+# Describe a deployment
+kubectl describe deploy <DEPLOYMENT_NAME>
+
+# Get all the namespaces
+kubectl get namespaces
+
+# Get all the pods in a given namespace
+kubectl get pods -n kube-system
+
+# Get pods in all the namespaces
+kubectl get pods --all-namespaces
+
+# Delete the replicaset, but it will start again
+kubectl delete rs <REPLICASET_NAME>
+
+# Deleting a deployment will remove all the replicasets and the pods
+kubectl delete deploy <DEPLOYMENT_NAME>
 ```
