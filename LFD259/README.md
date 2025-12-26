@@ -133,3 +133,44 @@ kubectl delete rs <REPLICASET_NAME>
 # Deleting a deployment will remove all the replicasets and the pods
 kubectl delete deploy <DEPLOYMENT_NAME>
 ```
+
+##### Lab 3.1. Deploy a New Application
+```cmd
+# Install python3
+sudo apt-get -y install python3
+
+# Locate python binary
+which python3
+
+# install podman
+sudo apt-get install -y podman
+
+# Create an image
+sudo podman build -t simpleapp .
+docker build -t simpleapp .
+
+# Show all the images
+sudo podman images
+docker images
+
+# Run a container
+sudo podman run localhost/simpleapp
+docker run simpleapp:latest
+```
+
+##### Lab 3.2. Configure a Local Repo
+```cmd
+# Spin up containers 
+kubectl create -f easyregistry.yaml
+
+# Create a deployment
+kubectl create deployment <DEP_NAME> --image=nginx
+
+# Scale a deployment
+kubectl scale deployment <DEP_NAME> --replicas=6
+```
+
+##### Lab 3.3. Configure Probes
+```cmd
+
+```
