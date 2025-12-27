@@ -172,5 +172,20 @@ kubectl scale deployment <DEP_NAME> --replicas=6
 
 ##### Lab 3.3. Configure Probes
 ```cmd
+# Convert the deployment to yaml format
+kubectl get deployment <DEP_NAME> -o yaml > simpleapp.yaml
 
+# Create a deployment from given file
+kubectl create -f simpleapp.yaml
+
+# Execute into a pod
+kubectl exec -it <POD_NAME> -- /bin/bash
+
+# Add the /tmp/healthy file to all containers
+for name in $(kubectl get pods -l app=simpleapp -o name); do
+  kubectl exec $name -- sh -c 'touch /tmp/healthy'
+done
+
+# Tail a pod
+kubectl describe pod <POD_NAME> | tail
 ```
