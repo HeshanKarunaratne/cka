@@ -1,24 +1,24 @@
-# CKA
+# CKAD
 
 #### Nodes(Minions)
 Containers will be launched in a node. What if the node on which our applications are running fails. Our application goes down as well. So you need to have more than 1 node.
 
 #### Cluster
-A cluster is a set of nodes grouped together. This way even if one node fails you have your application accessible from the other nodes. Helps to share load as well. Master watches over the nodes in the cluster and is responsible for the actual orchestration of containers on the worker nodes.
+A cluster is a set of nodes grouped together. This way even if one node fails you have your application still accessible from the other nodes. Helps to share load as well. Master node watches over the nodes in the cluster and is responsible for the actual orchestration of containers on the worker nodes.
 
 #### Master vs Worker Nodes
 
 #### Master
 Contains
-- kube-apiserver: Acts as the frontend for kubernetes, talks to the api server to interact with the cluster
-- etcd: Distributed key-value store to store all data used to manage the cluster
-- controller: Notices and responds when nodes, containers or endpoints goes down
+- kube-api-server: Acts as the frontend for kubernetes, talks to the api server to interact with the cluster
+- etcd: Distributed key-value store to store all data used to manage the cluster, and responsible for implementing locks within the cluster to ensure that there are no conflicts
+- controller: Notices and responds when nodes, containers or endpoints goes down, make decisions to bring up new containers
 - scheduler: Distributing work or containers across multiple nodes, looks for newly created containers and assigns them to nodes
 
 #### Worker
 Contains
 - kubelet: Is the agent responsible for making sure that the containers are running on the node as expected
-- container runtime: Underline software used to run containers
+- container runtime: Underline software used to run containers. eg: Docker, Podman
 
 ```cmd
 kubectl run hello-minikube
@@ -26,14 +26,16 @@ kubectl cluster-info
 kubectl get nodes
 ```
 
+- Master node has the kube-api-server and that is what makes it a master. Similarly, the worker nodes have the kubelet agent that is responsible for interacting with the master.
+
 #### Pods
 Kubernetes does not deploy containers directly on the worker nodes, the containers are encapsulated into a kubernetes object known as a Pod. The containers inside a pod will have access to the same storage, the same network namespace and same fate(created together, destroyed together)
 
-- A pod have a one to one relationship with the containers
+- A pod have a one-to-one relationship with the containers
 - A pod should have mandatory apiVersion, kind, metadata and spec 
-- Metadata is a dictionary and it should have name and labels under it(what kubernetes expect)
-- Labels is also a dictionary and you can have many key value pairs for it
-- Spec is a dictionary and you can place multiple containers inside the container(List/Array element) tag
+- Metadata is a dictionary, and it should have name and labels under it(what kubernetes expect)
+- Labels is also a dictionary, and you can have many key value pairs for it
+- Spec is a dictionary, and you can place multiple containers inside the container(List/Array element) tag
 
 ```yaml
 apiVersion: v1
@@ -161,6 +163,8 @@ kubectl delete pod $pod_name
 
 - How to update the defintion.yaml file?
 kubectl replace -f definition.yaml
+
+# It wont change the original value inside the replication definition file 
 kubectl scale --replicas=6 -f definition.yaml
 kubectl scale --replicas=6 <TYPE> <NAME>
 ```
@@ -256,7 +260,7 @@ kubectl create deployment httpd-frontend --replicas=3 --image=httpd:2.4-alpine
 ```
 
 #### Namespaces
-- Kubernetes creates default, kube-system and kube-public namespaces during startup, so that we wont accidently delete any resources
+- Kubernetes creates default, kube-system and kube-public namespaces during startup, so that we won't accidentally delete any resources
 ```text
 db-service   . dev       . svc     . cluster.local
 Service Name   Namespace   Service   Domain   
@@ -403,7 +407,7 @@ ENTRYPOINT ["sleep"]
 docker run ubuntu-sleeper 10
 ```
 
-- If you dont specify any arguments in `docker run` command how to make sure to add a default value in the docker compose file itself
+- If you don't specify any arguments in `docker run` command how to make sure to add a default value in the docker compose file itself
 
 ```Dockerfile
 FROM ubuntu
@@ -461,28 +465,28 @@ spec:
 ```
 
 - ENV value types
-  1. Plain key value
-  ```yaml
-  env:
-    - name: APP_COLOR
-      value: pink
-  ```
+1. Plain key value
+   ```yaml
+   env:
+     - name: APP_COLOR
+       value: pink
+   ```
 
-  2. ConfigMaps
-  ```yaml
-  env:
-    - name: APP_COLOR
-      valueFrom:
-        configMapKeyRef:
-  ```
+2. ConfigMaps
+   ```yaml
+   env:
+     - name: APP_COLOR
+       valueFrom:
+         configMapKeyRef:
+   ```
 
-  3. Secrets
-  ```yaml
-  env:
-    - name: APP_COLOR
-      valueFrom:
-        secretKeyRef:
-  ```
+3. Secrets
+   ```yaml
+   env:
+     - name: APP_COLOR
+       valueFrom:
+         secretKeyRef:
+   ```
 
 #### ConfigMaps
 We can take all the env specific data out of the pod definition file and manage it centrally using configuration maps (ConfigMaps). There are 2 phases involved in configuring ConfigMaps. 
@@ -568,7 +572,7 @@ kubectl create configmap webapp-config-map --from-literal=APP_COLOR=darkblue --f
 ```
 
 #### Secrets
-The configMap stores configuration data in plain text. This is where secrets are more useful becasue they store sensitive information. Secrets are not encrypted, only encoded.
+The configMap stores configuration data in plain text. This is where secrets are more useful because they store sensitive information. Secrets are not encrypted, only encoded.
 Anyone who create pods/deployments in the same namespace can access the secrets as well. So configure RBAC to secrets.
 
 ```cmd
@@ -691,8 +695,8 @@ resources:
       - identity: {}
 ```
 
-#### Docker Securtiy
-By default Docker runs a container with a limited set of capabilities. And so the
+#### Docker Security
+By default, Docker runs a container with a limited set of capabilities. And so the
 processes running within the container do not have the privileges. In case you wish to override this behavior and enable all privileges to the container use the privileged flag
 
 ```cmd
@@ -709,7 +713,7 @@ docker run --cap-drop MAC_ADMIN ubuntu
 docker run --priviledged ubuntu
 ```
 
-#### Securtiy Contexts
+#### Security Contexts
 
 - POD level security: If you configure it at a POD level, the settings will carry over to
 all the containers within the POD. If you configure it at both the POD and the Container, the settings on the container will override the settings on the POD.
@@ -787,9 +791,9 @@ apiVersion: v1
 kind: Secret
 type: kubernetes.io/service-account-token
 metadata:
-  name: mysecretname
+  name: secret
   annotations:
-    kubernetes.io/service-account.name: dsahboard-sa
+    kubernetes.io/service-account.name: dashboard-sa
 ```
 
 #### Questions - Service Accounts
@@ -1396,16 +1400,16 @@ kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedu
 ```
 
 #### Services
-Kubernetes services enable communication between various components within and outside of the application. There are multiple services
+Kubernetes services enable communication between various components within and outside the application. There are multiple services
   1. NodePort: Service makes an internal port accessible on a port on the node
   - There are 3 ports involved in this service
     1. targetPort - Port on the pod
     2. port - Port on the service
     3. nodePort - Port on the node(30000-32767)
 
-<img src="images/nodeport_service.PNG" alt="Alt text" width="800" height="400">
+<img src="images/service01.PNG" alt="Alt text" width="1307" height="687">
 
-In any case whether its a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
+In any case whether it's a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
 
 ```yml
 apiVersion: v1
@@ -1422,6 +1426,8 @@ spec:
     app: myapp
     type: front-end
 ```
+
+Port is the only parameter that is mandatory. If we don't specify a targetPort it will also get the same value as port and nodePort will get a value between 30000-32767
 
   2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
 
@@ -2409,9 +2415,9 @@ kubectl create secret tls webhook-server-tls --cert=/root/keys/webhook-server-tl
 
 When an API group is at V1 that means it is a generally available stable version.
 
-When you have multiple versions enabled and you run the `kubectl get deployment` command which version is the command going to query? Thats defined by the preferred version. When you execute `kubectl explain` command, the version that it returns is the preferred API version. 
+When you have multiple versions enabled and you run the `kubectl get deployment` command which version is the command going to query? That's defined by the preferred version. When you execute `kubectl explain` command, the version that it returns is the preferred API version. 
 
-Also when multiple versions are available, only one version can be the storage version. This means if any object is created with the API version set to anything other than the storage version, then those will be converted to the storage version which is V1 before storing to the etcd database.
+Also, when multiple versions are available, only one version can be the storage version. This means if any object is created with the API version set to anything other than the storage version, then those will be converted to the storage version which is V1 before storing to the etcd database.
 
 #### API Deprecations
 
