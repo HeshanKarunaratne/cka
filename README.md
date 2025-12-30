@@ -715,8 +715,7 @@ docker run --priviledged ubuntu
 
 #### Security Contexts
 
-- POD level security: If you configure it at a POD level, the settings will carry over to
-all the containers within the POD. If you configure it at both the POD and the Container, the settings on the container will override the settings on the POD.
+- POD level security: If you configure it at a POD level, the settings will carry over to all the containers within the POD. If you configure it at both the POD and the Container, the settings on the container will override the settings on the POD.
 
 ```yml
 apiVersion: v1
@@ -767,7 +766,7 @@ kubectl replace --force -f <PATH_TO_TEMP_FILE>
   2. Service Accounts - Used by an application
     eg: Prometheus uses kubernetes service account to pull the kubernetes api for performance metrics, jenkins to deploy application to kubernetes cluster
 
-- When a service account is created, it creates a token and you can use this token as a Bearer token when making API calls to kubernetes cluster
+- When a service account is created, it creates a token, and you can use this token as a Bearer token when making API calls to kubernetes cluster
 - Kubernetes mount default service account to pods automatically
 
 ```cmd
@@ -784,6 +783,9 @@ When the service account is created, it also creates a token automatically. The 
 
 - Use the token for api calls
 curl https://192.168.56.70:6555/api -insecure --header "Authorization: Bearer $token"
+
+- As of K8S v1.24 we need to create a token separately against the service account we need
+kubectl create token <SERVICE_ACCOUNT_NAME>
 ```
 
 ```yml
@@ -830,6 +832,7 @@ serviceAccountName: dashboard-sa
 back scheduling the POD, and you will see the POD in a pending state
 - Kubernetes assumes that a Pod or a container within a pod requires 0.5 CPU and 256 mebibyte(Mi) of memory
 - Limits and requests are set to each container within the pod
+- Make sure to add requests to CPU as per best practice
 - When a pod tries to exceed resources beyond its specified limit
   - CPU: Kubernetes throttles
   - Memory: A container can use more memory than its limit, but if the container tries to consume more memory than its limit constantly the pod will be terminated
@@ -869,15 +872,15 @@ kubectl get pods -o wide
 kubectl replace --force -f elephant.yaml
 ```
 
-#### Taints and Tolerations
+#### Taints and Toleration
 - Better way to visualize this is using a person(node) and a bug(pod)
 - There are 2 things that determine whether a bug can land on a person
   1. Persons Taint
   2. Bugs toleration level
 - Taints and Toleration are used to set restrictions on what pods can be scheduled on a node
 - If we apply a toleration on a pod, and a taint on a node, that specific pod can only be deployed in that node because of the toleration
-- Taints are set on nodes while Tolerations are set on pods
-- If we add a Taint on the node then any pod without a toleration cannot placed in that node
+- Taints are set on nodes while Toleration are set on pods
+- If we add a Taint on the node then any pod without a toleration cannot be placed in that node
 - There are 3 taint-effects
   1. NoSchedule: Pods will not be scheduled on the node
   2. PreferNoSchedule: The system will try to avoid placing a pod on the node
@@ -912,7 +915,7 @@ spec:
 - Even though we add a Taint in a specific node and a toleration to a pod, that pod can be placed in another node as well. If we need to restrict a pod to certain nodes it is achieved through another concept called Node Affinity.
 - Master node have a taint to stop pods from being scheduled on the node itself
 
-#### Questions - Taints and Tolerations
+#### Questions - Taints and Toleration
 ```cmd
 - How many nodes exist on the system?
 kubectl get nodes
@@ -936,7 +939,7 @@ kubectl edit node controlplane
 #### Node Selectors
 - We can define some limitations on the pod so that they can only run on particular nodes
 - key=value labels are assigned to the node, scheduler uses these labels to match and identify the right node to place the pods on
-- There are some limitations with NodeSelectors, for that we have NodeAffinity and NodeAntiAffnity rules
+- There are some limitations with NodeSelectors, for that we have NodeAffinity and NodeAntiAffinity rules
 
 ```yml
 apiVersion: v1
@@ -998,17 +1001,17 @@ kubectl label node node01 color=blue
 kubectl create deployment blue --image=nginx --replicas=3
 ```
 
-#### Taints Tolerations and Node Affinity
+#### Taints Toleration and Node Affinity
 
 - We have Blue, Red, Green and Other nodes. We have blue, red, green and other pods as well. Each separate pod must reside in the correct node. It should not be scheduled in a different node.
-- If use use both taints and tolerations that will not make sure that respective pods will not ends up in a different node which doesnt have any taints at all. It will make sure if there is a taint on the node, only tolerable pods are placed upon the node.
-- If we use node affinity to label each nodes and then set nodeSelectors on the pods to tie them to their nodes. That will not make sure that other pods will be placed on these nodes.
-- For this to happen, we can use both Taint and Tolerations along with node affinity
-- We use Taints and Tolerations to stop other pods from placed on our nodes, then use node affinity to prevent our pods from being placed on their nodes.
+- If you use both taints and toleration that will not make sure that respective pods will not end up in a different node which doesn't have any taints at all. It will make sure if there is a taint on the node, only tolerable pods are placed upon the node.
+- If we use node affinity to label each node and then set nodeSelectors on the pods to tie them to their nodes. That will not make sure that other pods will be placed on these nodes.
+- For this to happen, we can use both Taint and Toleration along with node affinity
+- We use Taints and Toleration to stop other pods from placed on our nodes, then use node affinity to prevent our pods from being placed on their nodes.
 
 #### Multi Container Pods
 - Created together, destroyed together to share the same lifecycle.
-- They have access to each other through localhost and they have access to the same storage volumes
+- They have access to each other through localhost, and they have access to the same storage volumes
 
 - Design Patterns
   1. SideCar Pattern - Log agent
@@ -1134,7 +1137,7 @@ spec:
 
 - Liveness Probes
 
-What if the container is up, but due to a bug application is stuck in an infinite loop and hence not working. Liveness probe can be configured on the container to periodically test whether the application within the container is actually healthy. If the test fails, the container is considered unhealthy and destryed and recreated.
+What if the container is up, but due to a bug application is stuck in an infinite loop and hence not working. Liveness probe can be configured on the container to periodically test whether the application within the container is actually healthy. If the test fails, the container is considered unhealthy and destroyed and recreated.
 
   1. HTTP Test - Testing an API
 
@@ -1195,7 +1198,7 @@ kubectl logs -f event-simulator-pod
 kubectl logs -f event-simulator-pod image-processor
 ```
 
-#### Monitoring- Metrics Server
+#### Monitoring-Metrics Server
 
 You can have 1 metrics server per kubernetes cluster. Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory.Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server. Kubelet contains a sub component known as CAdvisor. CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server.
 
@@ -1765,7 +1768,7 @@ kubectl create -f pv-definition.yml
 kubectl get persistentvolume
 ```
 
-#### Persisten Volume Claims
+#### Persistent Volume Claims
 
 Persistent Volumes and Persistent Volume Claims are two separate objects in the Kubernetes namespace.  An Administrator creates a set of Persistent Volumes and a user creates Persistent Volume Claims to use the storage. Once the Persistent Volume Claims are created, Kubernetes binds the Persistent Volumes to Claims based on the request and properties set on the volume.
 
@@ -1789,7 +1792,7 @@ spec:
       storage: 500Mi
 ```
 
-#### Questions - Persistant Volumes
+#### Questions - Persistent Volumes
 
 - Create a Persistent Volume with the given specification.
 Volume Name: pv-log; Storage: 100Mi; Access Modes: ReadWriteMany; Host Path: /pv/log; Reclaim Policy: Retain
