@@ -1014,9 +1014,11 @@ kubectl create deployment blue --image=nginx --replicas=3
 - They have access to each other through localhost, and they have access to the same storage volumes
 
 - Design Patterns
-  1. SideCar Pattern - Log agent
+  1. SideCar Pattern - Init containers keeps on running forever. eg: Log agent
   2. Adapter Pattern - Centralized agent to convert the messages to a common format
   3. Ambassador Pattern - Choosing the correct database but being able to use localhost throughout the application code
+  4. Co Located containers - Containers are a list and there is no order of startup
+  5. Init containers - Init containers execute and stops running before the main container starts
 
 ```yml
 apiVersion: v1
@@ -1041,7 +1043,7 @@ kubectl describe pod red
 - Create a multi container pod with 2 containers. If the pod goes to crashloopbackoff then add sleep 1000 in the lemon containers.
 Name: yellow; Container 1 name:lemon; Container 1 image: busybox; Container 2 name:gold; Container 2 image: redis
 kubectl run yellow --image=busybox --dry-run=client -o yaml 
-MAke sure to edit and update with the correct infomation
+Make sure to edit and update with the correct infomation
 
 - Inspect the app pod and identify the number of containers in it. It is deployed in the elastic-stack namespace?
 kubectl describe pod app -n elastic-stack
@@ -1200,7 +1202,7 @@ kubectl logs -f event-simulator-pod image-processor
 
 #### Monitoring-Metrics Server
 
-You can have 1 metrics server per kubernetes cluster. Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory.Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server. Kubelet contains a sub component known as CAdvisor. CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server.
+You can have 1 metrics server per kubernetes cluster. Metrics server retrieves metrics from each of the kubernetes nodes and pods, aggregate them and stores them in memory.Kubernetes runs an agent on each node, known as the kubelet, which is responsible for receiving instructions from the kubernetes API master server. Kubelet contains a subcomponent known as CAdvisor. CAdvisor is responsible for retrieving performance metrics from pods and exposing them through the kubelet API to make the metrics available for the metrics server.
 
 ```cmd
 - Run below command to run metrics server
@@ -1282,7 +1284,7 @@ kubectl get pods --selector env=prod,bu=finance,tier=frontend
 
 When you created a deployment a new rollout is triggered with a new revision number. There are 2 main types of deployment strategies
   1. Recreate: Destroy all the old versions and create the new versions. There will be an application downtime
-  2. Rolling update(default): Incremently bring down old version/create new version at a time. In this way application never goes down
+  2. Rolling update(default): Incrementally bring down old version/create new version at a time. In this way application never goes down
 
  ```cmd
  - Check the status of a rollout
@@ -1608,13 +1610,13 @@ spec:
       port: 3306
 ```
 
-In above yml we add a network policy and use labels and selectors to associate the policy with the pods. `role: db` are the labels to match the database pods. We need to make sure only api-pod can communicate to db-pod but only through port 3306. If we haven't specify a policy type this wont deny traffic to those pods, for that policyTypes is mandatory. Once you allow ingress traffic you dont need to specify a separate rule for egress traffic as well. You only need to add the traffic which is originating from source to target.
+In above yml we add a network policy and use labels and selectors to associate the policy with the pods. `role: db` are the labels to match the database pods. We need to make sure only api-pod can communicate to db-pod but only through port 3306. If we haven't specified a policy type this won't deny traffic to those pods, for that policyTypes is mandatory. Once you allow ingress traffic you don't need to specify a separate rule for egress traffic as well. You only need to add the traffic which is originating from source to target.
 
 <img src="images/network-policies-1.png" alt="Alt text" width="622" height="508">
 
-We need to make sure that db-pod is only accesible through the api-pod and only through port 3306. Web-pod should not be able to access db-pod. We dont need to worry on the web-pod and its port effect on db-pod. So we can remove it. We can remove the port of the api-pod as well, since its not needed for our requirement.
+We need to make sure that db-pod is only accessible through the api-pod and only through port 3306. Web-pod should not be able to access db-pod. We don't need to worry on the web-pod and its port effect on db-pod. So we can remove it. We can remove the port of the api-pod as well, since it's not needed for our requirement.
 
-<img src="images/network-policies-2.png" alt="Alt text" width="622" height="508">
+<img src="images/network-policies-2.png" alt="Alt text" width="381" height="381">
 
 Kubernetes allows all traffic by default from all pods to all destinations. First of all we need to block out everything going in and out of the database pod.
 
@@ -2525,7 +2527,7 @@ We need to monitor the status of the objects in ETCD and perform actions such as
 
 #### Deployment Strategy - Blue Green
 
-Blue Green deployment strategy where the new versions are deployed alongside the old versions. So the old version is called blue, and the new version is called green and 100% of the traffic is still routed to the old version. At this point in time tests are run on the new version. And once all tests are passed, we switch traffic to the new version all at once.
+Blue Green deployment strategy where the new versions are deployed alongside the old versions. So the old version is called blue, and the new version is called green and 100% of the traffic is still routed to the old version. At this point in time tests are running on the new version. And once all tests have been passed, we switch traffic to the new version all at once.
 
 myapp-blue.yaml
 ```yml
@@ -2601,11 +2603,11 @@ spec:
     version: v2
 ```
 
-#### Deplyment Strategy - Canary
+#### Deployment Strategy - Canary
 
 In this strategy we deploy the new version and route only a small percentage of traffic to it. Then we run tests and if everything looks good, we upgrade the original deployment with the newer version of the application. That could be done with a rolling upgrade strategy. Then we get rid of canary deployment.
 
-Service meshes like Istio comes with better control because you can define the exact percentage of traffic to be distributed between each deployment, and its not really dependent upon the number of pods in a deployment.
+Service meshes like Istio comes with better control because you can define the exact percentage of traffic to be distributed between each deployment, and it's not really dependent upon the number of pods in a deployment.
 
 myapp-primary.yaml
 ```yml
@@ -2670,7 +2672,7 @@ spec:
       app: front-end
 ```
 
-We only want to send a small percentage of traffic to it. So we deploy a single container only and so we set the replicas count to one. We need to route the traffic from the same service to both the deployments. We make sure that we use the same labels and selector combination under the pod spec labels to match what is already in the service definition.
+We only want to send a small percentage of traffic to it. So we deploy a single container only, and so we set the replicas count to one. We need to route the traffic from the same service to both the deployments. We make sure that we use the same labels and selector combination under the pod spec labels to match what is already in the service definition.
 
 #### Questions - Deployment Strategies
 ```cmd
