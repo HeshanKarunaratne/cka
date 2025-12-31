@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: network-policy-db
+  namespace: prod # will add the network policy to the prod namespace
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+    - Ingress
+    - Egress
+  # adding Ingress: [] and Egress: [] will block incoming and outgoing traffic on the pod
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              name: api-pod # matching pods with the labels can communicate to db-pod
+          namespaceSelector:
+            matchLabels:
+              name: prod # pods in different namespaces can also communicate to db-pod
+        - ipBlock:
+            cidr: 192.168.5.10/32 # this ip which is not part of k8s can communicate to db-pod
+      ports:
+        - protocol: TCP
+          port: 3306
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 192.168.5.10/32 # egress traffic to this ip address is enabled from db-pod
+      ports:
+        - protocol: TCP
+          port: 80

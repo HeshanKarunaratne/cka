@@ -1625,7 +1625,7 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: db-policy
-  namespace: prod # will add the network policy to the prod namespac
+  namespace: prod # will add the network policy to the prod namespace
 spec:
   podSelector:
     matchLabels:
@@ -1633,7 +1633,7 @@ spec:
   policyTypes:
   - Ingress
   - Egress
-  # adding Ingress and Egress will block incoming and outgoing traffic on the pod
+  # adding Ingress: [] and Egress: [] will block incoming and outgoing traffic on the pod
   ingress:
   - from:
     - podSelector:
@@ -1885,7 +1885,7 @@ kubectl get sc
 
 #### Stateful Sets
 
-When working with deployments PODs come up with random names. If the instances need a particular order and a name you can use statefulsets. With statefulsets PODs are created in a sequencial order. After the first POD is deployed, it must be in running and ready state before the next POD is deployed. To enable continuous replication you can point the slaves to the master. Even if the master fails and the POD is recreated, it would still come up with the same name. `podManagementPolicy: Parallel` add this to make the statefulset not follow the ordered approach(default value is OrderedReady)
+When working with deployments PODs come up with random names. If the instances need a particular order and a name you can use statefulsets. With statefulsets PODs are created in a sequential order. After the first POD is deployed, it must be in running and ready state before the next POD is deployed. To enable continuous replication you can point the slaves to the master. Even if the master fails and the POD is recreated, it would still come up with the same name. `podManagementPolicy: Parallel` add this to make the statefulsets not follow the ordered approach(default value is OrderedReady)
 
 ```yml
 apiVersion: apps/v1
@@ -1923,7 +1923,7 @@ kubectl delete statefulset mysql
 
 #### Headless Services
 
-The way you point one application within the cluster to another application is through a service. So if we had a web server, then to make the database server accessible to the web server, we create a service for the database. We name it `mysql`. The service now acts as a load balancer. The traffic coming into the service, is balanced across all the pods in the deployment. The service has a clusterIP and a DNS name associated with it. It usually goes like `mysql.default.svc.cluster.local`. Any other application within the environment can use this DNS record to reach the `mysql` database. What We need is a service that doesn't load balance requests but gives us a DNS entry to reach each pod. Thats a headless service. A headless service is created like a normal service, but it doesn't have an IP of its own. When you create a headless service each pod gets a DNS record created in the form of `podname.headless-servicename.namespace.svc.cluster.local`
+The way you point one application within the cluster to another application is through a service. So if we had a web server, then to make the database server accessible to the web server, we create a service for the database. We name it `mysql`. The service now acts as a load balancer. The traffic coming into the service, is balanced across all the pods in the deployment. The service has a clusterIP and a DNS name associated with it. It usually goes like `mysql.default.svc.cluster.local`. Any other application within the environment can use this DNS record to reach the `mysql` database. What We need is a service that doesn't load balance requests but gives us a DNS entry to reach each pod. That's a headless service. A headless service is created like a normal service, but it doesn't have an IP of its own. When you create a headless service each pod gets a DNS record created in the form of `podname.headless-servicename.namespace.svc.cluster.local`
 
     master  -> mysql-0.mysql-h.default.svc.cluster.local
     slave 1 -> mysql-1.mysql-h.default.svc.cluster.local
@@ -1943,7 +1943,7 @@ spec:
   clusterIP: None
 ```
 
-You must define subdomain value to the name of the service name, so that it will create DNS entries for the name of the service to point to the pod. To create A records you need to specify hostname option on the pod definition file. By default in a deployment file, if there are no values for subdomain and hostname, a headless service will not create A record for the pod. If we add the pod defintion in a deployment all the pods will get the same A record `mysql-pod.mysql-h.default.svc.cluster.local` and this will not help us to meet of addressing the pods separately. To overcome the issue we can use the StatefulSet and we need to explicitly define the serviceName so that it can identify the headless service. When creating a statefulset, you dont need to specify a subdomain or host name. It automatically assigns the right host name for each pod, based on the pod name.
+You must define subdomain value to the name of the service name, so that it will create DNS entries for the name of the service to point to the pod. To create A records you need to specify hostname option on the pod definition file. By default, in a deployment file, if there are no values for subdomain and hostname, a headless service will not create A record for the pod. If we add the pod definition in a deployment all the pods will get the same A record `mysql-pod.mysql-h.default.svc.cluster.local` and this will not help us to meet of addressing the pods separately. To overcome the issue we can use the StatefulSet and we need to explicitly define the serviceName so that it can identify the headless service. When creating a statefulsets, you don't need to specify a subdomain or host name. It automatically assigns the right host name for each pod, based on the pod name.
 
 ```yml
 apiVersion: v1
@@ -1986,11 +1986,11 @@ spec:
 
 #### Storage and StatefulSet
 
-If we need underlying all pods to share the same database storage we can do that. But for each pod to have a seaparate storage? Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SCs. Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulset-definition which is an array.
+If we need underlying all pods to share the same database storage we can do that. But for each pod to have a separate storage? Then each pod needs a PVC that bounds to a PV. These PVs can be created from a single SC or multiple SCs. Instead of maintaining a separate PVC-definition we can move the content to VolumeClaimTemplates in statefulsets definition which is an array.
 
-When the statefulset is created, it creates the first pod and during the creation of the pod, a PVC is created. The PVC is associated to a storage class so the storage class provisions a volume on GCP and then creates a PV and associates the PV with a volume and binds the PVC to the PV.
+When the statefulsets is created, it creates the first pod and during the creation of the pod, a PVC is created. The PVC is associated to a storage class so the storage class provisions a volume on GCP and then creates a PV and associates the PV with a volume and binds the PVC to the PV.
 
-StatefulSets doesn't automatically deletes PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus StatefulSets guarantees stable storage for pods.
+StatefulSets doesn't automatically delete PVC when a pod gets recreated or rescheduled in the same node or a different node, it ensures that the pod is reattached to the same PVC it was attached before. Thus, StatefulSets guarantees stable storage for pods.
 
 #### Dockerfile
 Dockerfile contains instructions and arguments
@@ -2044,7 +2044,7 @@ Who can access the server
   5. Service Accounts
 
 What can they do
-  1. RBAC Authorizarion
+  1. RBAC Authorization
   2. ABAC Authorization
   3. Node Authorization
   4. Webhook mode
@@ -2078,7 +2078,7 @@ Client uses the certificate file and key to query the Kubernetes REST API for a 
 
 We can use kubectl command using `kubectl get pods --server my-kube-playground:6443 --client-key admin.key --client-certificate admin.crt --certificate-authority ca.crt` 
 
-Typing these commands everytime is a tedious task, so we move these to a configuration file called as kubeconfig and using `kubectl get pods --kubeconfig config`. By default, the kubectl tool looks for a file named `config` under a directory `.kube` under the users home directory. If we create the config file there then we dont need to explicitly add it in the kubectl command.
+Typing these commands everytime is a tedious task, so we move these to a configuration file called as kubeconfig and using `kubectl get pods --kubeconfig config`. By default, the kubectl tool looks for a file named `config` under a directory `.kube` under the users home directory. If we create the config file there then we don't need to explicitly add it in the kubectl command.
 
 The kubeconfig file has 3 specific sections
 1. Clusters: Can be different environments or organizations or providers. `--server my-kube-playground:6443` specification goes into the cluster section
@@ -2857,19 +2857,3 @@ docker run -d --name=vote -p 5000:80 --link redis:redis saiachyuthm/voting-app
 docker run -d --name=result -p 5001:80 --link db:db saiachyuthm/result-app
 docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-app
 ```
-
-- Steps
-  1. Creating the pods
-    - voting-app-pod exposing containerPort 80
-    - worker-app-pod not exposing any ports
-    - result-app-pod exposing containerPort 80
-    - redis-pod exposing containerPort 6379
-    - postgres-pod exposing containerPort 5432
-
-  2. Creating the services
-    - Internal
-      - redis-service exposing port 6379, targetPort 6379, selectors of redis-pod and name as `redis`
-      - postgres-service exposing port 5432, targetPort 5432, selectors of postgres-pod and name as `db`
-    - External
-      - voting-app-service exposing port 80, targetPort 80, selectors of voting-app-pod and type as LoadBalancer
-      - result-app-service exposing port 80, targetPort 80, selectors of result-app-pod and type as LoadBalancer
