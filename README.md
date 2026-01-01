@@ -2056,7 +2056,7 @@ What can they do
 #### Authentication
 
 Admins access the cluster to perform administrative tasks, developers access the cluster to test or deploy applications, end users who access the applications deployed on the cluster,
-and third party applications accessing the cluster for integration purposes. All user access is managed by the API server. Whether you are accessing the cluster through `kubectl tool` or the `API directly`. `All of these requests go through the kube-apiserver and it authenticates the requests before processing it`.
+and third party applications accessing the cluster for integration purposes. All user access is managed by the API server. Whether you are accessing the cluster through `kubectl` or the `API directly`. All of these requests go through the `kube-apiserver` and it authenticates the requests before processing it`.
 
 1. Static Password File
 
@@ -2070,7 +2070,7 @@ and third party applications accessing the cluster for integration purposes. All
     
     While authenticating, specify the token as an authorization bearer token to your request like `curl -v -k https://master-node-ip:6443/api/v1/pods --header "Authorization: Bearer <TOKEN>"`
     
-    `These are not a recommended authentication mechanism.`
+    `These are not recommended authentication mechanisms.`
 
 3. Certificates
 
@@ -2082,7 +2082,7 @@ Client uses the certificate file and key to query the Kubernetes REST API for a 
 
 We can use kubectl command using `kubectl get pods --server my-kube-playground:6443 --client-key admin.key --client-certificate admin.crt --certificate-authority ca.crt` 
 
-Typing these commands everytime is a tedious task, so we move these to a configuration file called as kubeconfig and using `kubectl get pods --kubeconfig config`. By default, the kubectl tool looks for a file named `config` under a directory `.kube` under the users home directory. If we create the config file there then we don't need to explicitly add it in the kubectl command.
+Typing these commands everytime is a tedious task, so we move these to a configuration file called as kubeconfig and using `kubectl get pods --kubeconfig config`. By default, the kubectl looks for a file named `config` under a directory `.kube` under the users home directory. If we create the config file there then we don't need to explicitly add it in the kubectl command.
 
 The kubeconfig file has 3 specific sections
 1. Clusters: Can be different environments or organizations or providers. `--server my-kube-playground:6443` specification goes into the cluster section
@@ -2145,7 +2145,7 @@ kubectl config view
 kubectl config view --kubeconfig=my-kube-config
 
 - I would like to use the dev-user to access test-cluster-1. Set the current context to the right one so I can do that?
-kubectl config --kubeconfig=my-kube-config use-context dev-user@test-cluster-1
+kubectl config --kubeconfig=my-kube-config use-context research
 ```
 
 #### API Groups
