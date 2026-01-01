@@ -1092,31 +1092,31 @@ Pod status can be from Pending, ContainerCreating and Running. When a POD is fir
 - Readiness Probes
   1. HTTP Test - Testing an API
 
-  ```yml
-  readinessProbe:
-    httpGet:
-      path: /api/ready
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    failureThreshold: 8
-  ```
+      ```yml
+      readinessProbe:
+        httpGet:
+          path: /api/ready
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 8
+      ```
 
   2. TCP Test - Testing a port available
 
-  ```yml
-  readinessProbe:
-    tcpSocket:
-      port: 3306
-  ```
+      ```yml
+      readinessProbe:
+        tcpSocket:
+          port: 3306
+      ```
 
   3. Exec Command - Running a script inside the container
 
-  ```yml
-  readinessProbe:
-    exec:
-      command: ["cat", "/app/is_ready"]
-  ```
+      ```yml
+      readinessProbe:
+        exec:
+          command: ["cat", "/app/is_ready"]
+      ```
 
 ```yml
 apiVersion: v1
@@ -1143,31 +1143,31 @@ What if the container is up, but due to a bug application is stuck in an infinit
 
   1. HTTP Test - Testing an API
 
-  ```yml
-  livenessProbe:
-    httpGet:
-      path: /api/ready
-      port: 8080
-    initialDelaySeconds: 10
-    periodSeconds: 5
-    failureThreshold: 8
-  ```
+      ```yml
+      livenessProbe:
+        httpGet:
+          path: /api/ready
+          port: 8080
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        failureThreshold: 8
+      ```
 
   2. TCP Test - Testing a port available
 
-  ```yml
-  livenessProbe:
-    tcpSocket:
-      port: 3306
-  ```
+      ```yml
+      livenessProbe:
+        tcpSocket:
+          port: 3306
+      ```
 
   3. Exec Command - Running a script inside the container
 
-  ```yml
-  livenessProbe:
-    exec:
-      command: ["cat", "/app/is_ready"]
-  ```
+      ```yml
+      livenessProbe:
+        exec:
+          command: ["cat", "/app/is_ready"]
+      ```
 
 #### Questions - Readiness and Liveness Probes
 ```cmd
@@ -1406,52 +1406,56 @@ kubectl create cronjob throw-dice-cron-job --image=kodekloud/throw-dice --schedu
 
 #### Services
 Kubernetes services enable communication between various components within and outside the application. There are multiple services
-  1. NodePort: Service makes an internal port accessible on a port on the node
-  - There are 3 ports involved in this service
-    1. targetPort - Port on the pod
-    2. port - Port on the service
-    3. nodePort - Port on the node(30000-32767)
+1. NodePort: Service makes an internal port accessible on a port on the node
 
-<img src="images/service01.PNG" alt="Alt text" width="1307" height="687">
+    There are 3 ports involved in this service
 
-In any case whether it's a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
+         targetPort - Port on the pod
 
-```yml
-apiVersion: v1
-kind: Service
-metadata: 
-  name: myapp-service
-spec: 
-  type: NodePort
-  ports:
-    - targetPort: 80
-      port: 80
-      nodePort: 30008
-  selector:
-    app: myapp
-    type: front-end
-```
+         port - Port on the service
 
-Port is the only parameter that is mandatory. If we don't specify a targetPort it will also get the same value as port and nodePort will get a value between 30000-32767
+         nodePort - Port on the node(30000-32767)
+    
+    <img src="images/service01.PNG" alt="Alt text" width="1307" height="687">
+    
+    In any case whether it's a single pod in a single node, multiple pods in a single node, multiple pods in multiple nodes the service is created exactly same. When pods are removed or added the service is automatically updated.
+    
+    ```yml
+    apiVersion: v1
+    kind: Service
+    metadata: 
+      name: myapp-service
+    spec: 
+      type: NodePort
+      ports:
+        - targetPort: 80
+          port: 80
+          nodePort: 30008
+      selector:
+        app: myapp
+        type: front-end
+    ```
+    
+    Port is the only parameter that is mandatory. If we don't specify a targetPort it will also get the same value as port and nodePort will get a value between 30000-32767
 
-  2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
+2. ClusterIP: Service creates a virtual IP inside the cluster to enable communication between different services
 
-```yml
-apiVersion: v1
-kind: Service
-metadata: 
-  name: myapp-service
-spec: 
-  type: ClusterIP
-  ports:
-    - targetPort: 80  # backend exposed port
-      port: 80 # service exposed port
-  selector:
-    app: myapp
-    type: front-end
-```
+    ```yml
+    apiVersion: v1
+    kind: Service
+    metadata: 
+      name: myapp-service
+    spec: 
+      type: ClusterIP
+      ports:
+        - targetPort: 80  # backend exposed port
+          port: 80 # service exposed port
+      selector:
+        app: myapp
+        type: front-end
+    ```
 
-  3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
+3. LoadBalancer: Provisions a load balancer for our application in supported cloud provider
 
 ```cmd
 - Create a service
@@ -2034,7 +2038,7 @@ docker run python:3.6 cat /etc/*release*
 
 #### Authentication and Authorization
 
-kube-apiserver is at the center of all opearions within Kubernetes. Controlling access to the api-server is the first line of defense. Who can access the cluster and What can they do?
+kube-apiserver is at the center of all operations within Kubernetes. Controlling access to the api-server is the first line of defense. Who can access the cluster and What can they do?
 
 Who can access the server
   1. Username and Passwords
@@ -2056,17 +2060,17 @@ and third party applications accessing the cluster for integration purposes. All
 
 1. Static Password File
 
-Create a user-details.csv where you have a list of users with their password, username and userid. Pass it to the kube-apiserver.service file as `--basic-auth-file=user-details.csv`
-
-If you setup the cluster using the Kube ADM tool, then you should modify the Kube API server pod definition file. Kube ADM tool will automatically restart the Kube API server once you update the file.
+    Create a user-details.csv where you have a list of users with their password, username and userid. Pass it to the kube-apiserver.service file as `--basic-auth-file=user-details.csv`
+    
+    If you set up the cluster using the Kube ADM tool, then you should modify the Kube API server pod definition file. Kube ADM tool will automatically restart the Kube API server once you update the file.
 
 2. Static Token File
 
-Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid. Add it to kube-apiserver.service file as `--token-auth-file=user-token-details.csv`
-
-While authenticating, specify the token as an authorization bearer token to your request like `curl -v -k https://master-node-ip:6443/api/v1/pods --header "Authorization: Bearer <TOKEN>"`
-
-`These are not a recommended authentication mechanism.`
+    Create a user-token-details.csv where you have a list of users with their tokens, name, userid and groupid. Add it to kube-apiserver.service file as `--token-auth-file=user-token-details.csv`
+    
+    While authenticating, specify the token as an authorization bearer token to your request like `curl -v -k https://master-node-ip:6443/api/v1/pods --header "Authorization: Bearer <TOKEN>"`
+    
+    `These are not a recommended authentication mechanism.`
 
 3. Certificates
 
@@ -2110,7 +2114,7 @@ users:
     client-key: admin.key
 ```
 
-Once this file is ready we dont need to create any object like we usually do. The file is left as is, and is read by the kubectl command and the required values are used.
+Once this file is ready we don't need to create any object like we usually do. The file is left as is, and is read by the kubectl command and the required values are used.
 
 ```cmd
 - View the current config file
@@ -2147,9 +2151,9 @@ kubectl config --kubeconfig=my-kube-config use-context dev-user@test-cluster-1
 #### API Groups
 APIs are mainly categorized into 2 groups
 1. Core group: /api
-- All the core functionality is maintained. 
+   - All the core functionality is maintained. 
   
-  eg: namespaces, pods, rc, events, nodes, PV, PVC, configmaps, secrets, services, endpoints, bindings
+     eg: namespaces, pods, rc, events, nodes, PV, PVC, configmaps, secrets, services, endpoints, bindings
 
 2. Named group: /apis
 - More organized and all the newer features are going to be made available through these named groups
@@ -2169,20 +2173,20 @@ APIs are mainly categorized into 2 groups
 `kubectl proxy` Starts a proxy server on port 8001 locally and user credentials and certificates from your kubeconfig file to access the cluster. `curl http://localhost:8001 -k`
 So the proxy will use the credentials from the kubeconfig file to forward the request to the kube API server.
 
-`kube proxy` is used to enable connectivity between pods and services across different nodes in the cluster. `kubectl proxy` is an http proxy service created by Kube control utility to access the Kube API server.
+`kube proxy` is used to enable connectivity between pods and services across different nodes in the cluster. `kubectl proxy` is a http proxy service created by Kube control utility to access the Kube API server.
 
 #### Authorization
 Below are the different way to of authorizing in Kubernetes
 1. Node Authorization
 2. ABAC: Attribute Bases Authorization
-  - You need to edit the policy file everytime you need to make change and restart the kube API server
-  - `{ "kind": "Policy", "spec": { "user": "dev-user", "namesapce": "*", "resource": "pods", "apiGroup": "*" } }`
-  - Because of that ABAC configurations are difficult to manage
+   - You need to edit the policy file everytime you need to make change and restart the kube API server
+   - `{ "kind": "Policy", "spec": { "user": "dev-user", "namesapce": "*", "resource": "pods", "apiGroup": "*" } }`
+   - Because of that ABAC configurations are difficult to manage
 3. RBAC: Role Based Authorization
-  - With RBAC instead of directly associating a user or a group with a set of permissions, we define a role
+   - With RBAC instead of directly associating a user or a group with a set of permissions, we define a role
 4. Webhook
-  - If you want to manage the authorization externally and not through built in mechanisms
-    - ex: Open Policy Agent
+   - If you want to manage the authorization externally and not through built in mechanisms
+     - ex: Open Policy Agent
 5. AlwaysAllow and AlwaysDeny
   - `--authorization-mode=AlwaysAllow` can be configured on the kube API server. Default value is `AlwaysAllow`
   - You can have multiple modes configured by separating with a comma `--authorization-mode=Node, RBAC,Webhook`. All the requests are authorized in the order it is specified. If a module denies the request it is passed to the next module in the chain.
@@ -2283,10 +2287,10 @@ kubectl create rolebinding dev-user-binding --role=developer --user=dev-user
 
 #### Cluster Roles
 
-Roles and RoleBindings are namespaced. If you dont specify a namespace they are created in the default namespace and control access within that namespace alone. Can you group or isolate nodes within the namespace? Those are cluster wide or cluster scoped resources.
+Roles and RoleBindings are namespaced. If you don't specify a namespace they are created in the default namespace and control access within that namespace alone. Can you group or isolate nodes within the namespace? Those are cluster wide or cluster scoped resources.
 
 Resources are categorized as either namespaced or cluster scoped. To view the list of namespaced and non namespaced resourced use `kubectl api-resources --namespaced=true`
-We use clusterroles and clusterrolebindings to authorize access to cluster scoped resources.
+We use ClusterRoles and ClusterRoleBindings to authorize access to cluster scoped resources.
 
 ```yml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -2349,7 +2353,7 @@ What if we want to achieve below scenarios,
   - Not permit runAs root user
   - Permit certain capabilities
   - To always have labels
-These are some of the things that we cant achieve with the existing role based access controls and thats where `admission controllers` comes in. Admission controllers help us implement better security measures to enforce how a cluster is used.
+These are some of the things that we cant achieve with the existing role based access controls and that's where `admission controllers` comes in. Admission controllers help us implement better security measures to enforce how a cluster is used.
 
 `kube-apiserver -h | grep enable-admission-plugins` to view all the admission controllers.
 
@@ -2371,7 +2375,7 @@ NodeRestriction is not enabled by default
 
 NamespaceExists admission controller - It can help validate if a namespace already exists and reject the request if it doesn't exist. This is a validating admission controller.
 
-DefaultStorageClass admission controller - Will watch for any request to create a PVC and check if it has a StorageClass mentioned in it. If its not it will modify the request and add `storageClassName: default`. This is a mutating admission controller. It can change or mutate the object itself before it is created.
+DefaultStorageClass admission controller - Will watch for any request to create a PVC and check if it has a StorageClass mentioned in it. If it's not it will modify the request and add `storageClassName: default`. This is a mutating admission controller. It can change or mutate the object itself before it is created.
 
 Mutating admission controllers are run first followed by validating admission controllers.
   - NamespaceAutoProvision is executed before NamespaceExists admission controller
@@ -2380,7 +2384,7 @@ To support external admission controllers there are two special admission contro
   1. MutatingAdmission Webhook
   2. ValidatingAdmission Webhook
 
-We can configure these webhooks to point to a server thats hosted either within the kubernetes cluster or outside it, and our server will have our own admission webhook service running with our own code and logic. Once the request hits the webhook, it makes a call to the admission webhook server bypassing in an `admission review object` in a json format. On receiving the request, the admission webhook server responds with a result of whether the request is allowed or not.
+We can configure these webhooks to point to a server that's hosted either within the kubernetes cluster or outside it, and our server will have our own admission webhook service running with our own code and logic. Once the request hits the webhook, it makes a call to the admission webhook server bypassing in an `admission review object` in a json format. On receiving the request, the admission webhook server responds with a result of whether the request is allowed or not.
 
 Example ValidatingAdmission Webhook
 ```yml
@@ -2420,7 +2424,7 @@ kubectl create secret tls webhook-server-tls --cert=/root/keys/webhook-server-tl
 
 When an API group is at V1 that means it is a generally available stable version.
 
-When you have multiple versions enabled and you run the `kubectl get deployment` command which version is the command going to query? That's defined by the preferred version. When you execute `kubectl explain` command, the version that it returns is the preferred API version. 
+When you have multiple versions enabled, and you run the `kubectl get deployment` command which version is the command going to query? That's defined by the preferred version. When you execute `kubectl explain` command, the version that it returns is the preferred API version. 
 
 Also, when multiple versions are available, only one version can be the storage version. This means if any object is created with the API version set to anything other than the storage version, then those will be converted to the storage version which is V1 before storing to the etcd database.
 
@@ -2428,7 +2432,7 @@ Also, when multiple versions are available, only one version can be the storage 
 
 Policy Rule 1: API elements may only be removed by incrementing the version of the API group.
 
-Policy Rule 2: API objects must be able to round trip between API versions in a given release without information loss, with the exception of whole REST resources that do not exist in some versions.
+Policy Rule 2: API objects must be able to round trip between API versions in a given release without information loss, except whole REST resources that do not exist in some versions.
 
 Policy Rule 3: An API version in a given track may not be deprecated until a new API version at least as stable is released.
 
@@ -2721,113 +2725,111 @@ helm pull --untar bitnami/apache
 ```
 
 #### Questions - Lightning Labs 1
-```txt
-
 1. Create a Persistent Volume called 'log-volume'. It should make use of a storage class name 'manual'. It should use 'RWX' as the access mode and have a size of '1Gi'. The volume should use the hostPath '/opt/volume/nginx'. 
 Next, create a PVC called 'log-claim' requesting a minimum of '200Mi' of storage. This PVC should bind to 'log-volume'. 
 Mount this in a pod called 'logger' at the location '/var/www/nginx'. This pod should use the image 'nginx:alpine'.
 
-```pv.yaml
-apiVersion: v1
-kind: PersistentVolume
-metadata:
-  name: log-volume
-spec:
-  storageClassName: manual
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteMany
-  hostPath:
-    path: /opt/volume/nginx
-```
-
-```pvc.yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: log-claim
-spec:
-  accessModes:
-    - ReadWriteMany
-  resources:
-    requests:
-      storage: 200Mi
-  storageClassName: manual
-```
-
-```pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: logger
-spec:
-  containers:
-  - name: logger
-    image: nginx:alpine
-    volumeMounts:
-    - mountPath: /var/www/nginx
-      name: log
-  volumes:
-  - name: log
-    persistentVolumeClaim:
-      claimName: log-claim
-```
+    ```pv.yaml
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: log-volume
+    spec:
+      storageClassName: manual
+      capacity:
+        storage: 1Gi
+      accessModes:
+        - ReadWriteMany
+      hostPath:
+        path: /opt/volume/nginx
+    ```
+    
+    ```pvc.yaml
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: log-claim
+    spec:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 200Mi
+      storageClassName: manual
+    ```
+    
+    ```pod.yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: logger
+    spec:
+      containers:
+      - name: logger
+        image: nginx:alpine
+        volumeMounts:
+        - mountPath: /var/www/nginx
+          name: log
+      volumes:
+      - name: log
+        persistentVolumeClaim:
+          claimName: log-claim
+    ```
 
 2. We have deployed a new pod called 'secure-pod' and a service called 'secure-service'. Incoming or Outgoing connections to this pod are not working. Troubleshoot why this is happening. 
 Make sure that incoming connection from the pod 'webapp-color' are successful.
 
-```network.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: ingress-webapp-to-secure-pod
-spec:
-  podSelector:
-    matchLabels:
-      run: secure-pod
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              name: webapp-color
-  policyTypes:
-    - Ingress
-```
+    ```network.yaml
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: ingress-webapp-to-secure-pod
+    spec:
+      podSelector:
+        matchLabels:
+          run: secure-pod
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  name: webapp-color
+      policyTypes:
+        - Ingress
+    ```
 
 3. Create a pod called 'time-check' in the 'dvl1987' namespace. This pod should run a container called time-check that uses the 'busybox' image. 
 a. Create a config map called 'time-config' with the data 'TIME_FREQ=10' in the same namespace. 
 b. The time-check container should run the command: 'while true; do date; sleep $TIME_FREQ;done' and write the result to the location '/opt/time/time-check.log'.
 c. The path '/opt/time' on the pod should mount a volume that lasts the lifetime of this pod.
 
-kubectl create ns dvl1987
-kubectl create configmap time-config --from-literal=TIME_FREQ=10 --namespace dvl1987
+    kubectl create ns dvl1987
+    kubectl create configmap time-config --from-literal=TIME_FREQ=10 --namespace dvl1987
 
-```pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: time-check
-  namespace: dvl1987
-spec:
-  containers:
-    - name: time-check
-      image: busybox
-      command: ["/bin/sh", "-c"]
-      args: ["while true; do date >> /opt/time/time-check.log; sleep $TIME_FREQ; done"]
-      env:
-        - name: TIME_FREQ
-          valueFrom:
-            configMapKeyRef:
-              name: time-config
-              key: TIME_FREQ
-      volumeMounts:
+    ```pod.yaml
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      name: time-check
+      namespace: dvl1987
+    spec:
+      containers:
+        - name: time-check
+          image: busybox
+          command: ["/bin/sh", "-c"]
+          args: ["while true; do date >> /opt/time/time-check.log; sleep $TIME_FREQ; done"]
+          env:
+            - name: TIME_FREQ
+              valueFrom:
+                configMapKeyRef:
+                  name: time-config
+                  key: TIME_FREQ
+          volumeMounts:
+            - name: time-volume
+              mountPath: /opt/time
+      volumes:
         - name: time-volume
-          mountPath: /opt/time
-  volumes:
-    - name: time-volume
-      emptyDir: {}
-```
+          emptyDir: {}
+    ```
 
 4. Create a new deployment called 'nginx-deploy', with one single container called nginx, image 'nginx:1.16' and 4 replicas. 
 The deployment should use 'RollingUpdate' strategy with 'maxSurge=1, and maxUnavailable=2'.
@@ -2840,20 +2842,3 @@ It should mount exactly 2 volumes.
 a. An Empty directory volume called data at path /redis-master-data.
 b. A configmap volume called redis-config at path /redis-master.
 c. The container should expose the port 6379.
-```
-
-#### Networks
-IP address is assigned to a pod. All nodes can communicate with all containers and vice versa without using a NAT. Internal pod network is in the range of 10.244.0.0
-
-#### LoadBalancer
-Provisions a load balancer for our application
-
-#### Microservices
-
-```cmd
-docker run -d --name=redis redis
-docker run -d --name=db -e POSTGRES_PASSWORD=123 postgres:16
-docker run -d --name=vote -p 5000:80 --link redis:redis saiachyuthm/voting-app
-docker run -d --name=result -p 5001:80 --link db:db saiachyuthm/result-app
-docker run -d --name=worker --link redis:redis ---link db:db cfjaramillo/worker-app
-```
