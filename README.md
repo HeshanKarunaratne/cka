@@ -2724,6 +2724,26 @@ helm uninstall bravo
 helm pull --untar bitnami/apache
 ```
 
+#### Kustomize
+
+How do we customize each one of our environments without having to duplicate all of our code? Kustomize solves this issue. Below terms are used to identify the behaviour of Kustomize.
+
+1. Base config - Configs that are identical across all the environments
+2. Overlays - Customize the behaviour on a per-environment basis
+
+Does not require learning how to use any complex & hard to read templating systems like Helm.
+
+Kustomize looks for a `kustomization.yaml` file which contains:
+- List of all the Kubernetes manifests kustomize should manage
+- All the customizations that should be applied.
+
+The `kustomize build` command combines all the manifests and applies the defined transformations. But it does not apply/ deploy the Kubernetes resources to a cluster.
+
+`kustomize build | kubectl apply -f -` or `kubectl apply -k .` to apply and create k8s resources. `kustomize build | kubectl delete -f -` or `kubectl delete -k .` to delete k8s resources.
+
+
+
+
 #### Questions - Lightning Labs 1
 1. Create a Persistent Volume called 'log-volume'. It should make use of a storage class name 'manual'. It should use 'RWX' as the access mode and have a size of '1Gi'. The volume should use the hostPath '/opt/volume/nginx'. 
 Next, create a PVC called 'log-claim' requesting a minimum of '200Mi' of storage. This PVC should bind to 'log-volume'. 
