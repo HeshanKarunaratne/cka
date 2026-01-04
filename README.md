@@ -2741,9 +2741,6 @@ The `kustomize build` command combines all the manifests and applies the defined
 
 `kustomize build | kubectl apply -f -` or `kubectl apply -k .` to apply and create k8s resources. `kustomize build | kubectl delete -f -` or `kubectl delete -k .` to delete k8s resources.
 
-
-
-
 #### Questions - Lightning Labs 1
 1. Create a Persistent Volume called 'log-volume'. It should make use of a storage class name 'manual'. It should use 'RWX' as the access mode and have a size of '1Gi'. The volume should use the hostPath '/opt/volume/nginx'. 
 Next, create a PVC called 'log-claim' requesting a minimum of '200Mi' of storage. This PVC should bind to 'log-volume'. 
