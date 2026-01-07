@@ -2207,6 +2207,8 @@ rules:
   verbs: ["create"]
 ```
 
+For core groups we can leave the `apiGroups` as blank and for any other groups we can specify the group name.
+
 Next we want to link a user to the role. For that we create role bindings.
 
 ```yml
