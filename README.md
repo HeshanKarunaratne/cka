@@ -2357,12 +2357,14 @@ What if we want to achieve below scenarios,
   - To always have labels
 These are some of the things that we cant achieve with the existing role based access controls and that's where `admission controllers` comes in. Admission controllers help us implement better security measures to enforce how a cluster is used.
 
-`kube-apiserver -h | grep enable-admission-plugins` to view all the admission controllers.
+`kubectl describe pod kube-apiserver-docker-desktop -n kube-system` to view all the admission controllers.
 
 #### Questions - Admission Controllers
 ```cmd
-- What is not a function of admission controller?
-Authenticate user
+- What is a function of admission controller?
+Validate configuration
+Perform additional operations before the pod gets created
+Help us implement better security measures
 
 - Which admission controller is not enabled by default?
 kubectl exec -it kube-apiserver-controlplane -n kube-system -- kube-apiserver -h | grep 'enable-admission-plugins'
@@ -2379,7 +2381,7 @@ NamespaceExists admission controller - It can help validate if a namespace alrea
 
 DefaultStorageClass admission controller - Will watch for any request to create a PVC and check if it has a StorageClass mentioned in it. If it's not it will modify the request and add `storageClassName: default`. This is a mutating admission controller. It can change or mutate the object itself before it is created.
 
-Mutating admission controllers are run first followed by validating admission controllers.
+Mutating admission controllers are invoked first followed by validating admission controllers.
   - NamespaceAutoProvision is executed before NamespaceExists admission controller
 
 To support external admission controllers there are two special admission controllers available.

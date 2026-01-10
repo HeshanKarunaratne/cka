@@ -1,0 +1,8 @@
+apiVersion: flights.com/v1
+kind: FlightTicket
+metadata:
+  name: custom-resource
+spec:
+  from: Mumbai
+  to: London
+  number: 2
