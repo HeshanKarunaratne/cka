@@ -2804,18 +2804,21 @@ Make sure that incoming connection from the pod 'webapp-color' are successful.
     apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
     metadata:
-      name: ingress-webapp-to-secure-pod
+      name: test-network-policy
     spec:
       podSelector:
         matchLabels:
           run: secure-pod
-      ingress:
-        - from:
-            - podSelector:
-                matchLabels:
-                  name: webapp-color
       policyTypes:
-        - Ingress
+      - Ingress
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              name: webapp-color
+        ports:
+        - protocol: TCP
+          port: 80
     ```
 
 3. Create a pod called 'time-check' in the 'dvl1987' namespace. This pod should run a container called time-check that uses the 'busybox' image. 
