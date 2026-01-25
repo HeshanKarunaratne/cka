@@ -2860,6 +2860,37 @@ The deployment should use 'RollingUpdate' strategy with 'maxSurge=1, and maxUnav
 Next upgrade the deployment to version 1.17. 
 Finally, once all pods are updated, undo the update and go back to the previous version.
 
+    ```deployment.yaml
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: nginx-deploy
+      namespace: default
+    spec:
+      replicas: 4
+      selector:
+        matchLabels:
+          app: nginx-deploy
+      strategy:
+        rollingUpdate:
+          maxSurge: 1
+          maxUnavailable: 2
+        type: RollingUpdate
+      template:
+        metadata:
+          labels:
+            app: nginx-deploy
+        spec:
+          containers:
+          - image: nginx:1.15
+            imagePullPolicy: IfNotPresent
+            name: nginx
+          restartPolicy: Always
+    ```
+    k set image deployment/nginx-deploy nginx=nginx:1.17
+    k rollout undo deployment/nginx-deploy
+
 5. Create a redis deployment with the following parameters: 
 Name of the deployment should be 'redis' using the 'redis:alpine' image. It should have exactly 1 replica. The container should request for '.2 CPU'. It should use the label 'app=redis'. 
 It should mount exactly 2 volumes.
