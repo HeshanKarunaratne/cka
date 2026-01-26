@@ -2837,10 +2837,11 @@ The `kustomize build` command combines all the manifests and applies the defined
           port: 80
     ```
 
-3. Create a pod called 'time-check' in the 'dvl1987' namespace. This pod should run a container called time-check that uses the 'busybox' image. 
-a. Create a config map called 'time-config' with the data 'TIME_FREQ=10' in the same namespace. 
-b. The time-check container should run the command: 'while true; do date; sleep $TIME_FREQ;done' and write the result to the location '/opt/time/time-check.log'.
-c. The path '/opt/time' on the pod should mount a volume that lasts the lifetime of this pod.
+3. Create a pod named `time-check` in the `dvl1987` namespace. This pod should execute a container called `time-check` using the `busybox` image.
+
+    Create a ConfigMap named `time-config` with the data `TIME_FREQ=10` in the same namespace.
+    The `time-check` container must run the command: `while true; do date; sleep $TIME_FREQ; done`, directing the output to the file located at `/opt/time/time-check.log`.
+    Ensure that the path `/opt/time` within the pod mounts a volume that persists for the duration of the pod's lifecycle.
 
     kubectl create ns dvl1987
     kubectl create configmap time-config --from-literal=TIME_FREQ=10 --namespace dvl1987
@@ -2871,10 +2872,18 @@ c. The path '/opt/time' on the pod should mount a volume that lasts the lifetime
           emptyDir: {}
     ```
 
-4. Create a new deployment called 'nginx-deploy', with one single container called nginx, image 'nginx:1.16' and 4 replicas. 
-The deployment should use 'RollingUpdate' strategy with 'maxSurge=1, and maxUnavailable=2'.
-Next upgrade the deployment to version 1.17. 
-Finally, once all pods are updated, undo the update and go back to the previous version.
+4. Create a new deployment called `nginx-deploy`, with 
+
+   One container called `nginx`
+   Image: `nginx:1.16`
+   4 replicas
+   RollingUpdate strategy with:
+   `maxSurge=1`
+   `maxUnavailable=2`
+
+    Upgrade the Deployment to version `1.17`. 
+
+    Once all pods are updated, undo the update and roll back to the previous version.
 
     ```deployment.yaml
     apiVersion: apps/v1
