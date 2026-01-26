@@ -2746,9 +2746,20 @@ The `kustomize build` command combines all the manifests and applies the defined
 `kustomize build | kubectl apply -f -` or `kubectl apply -k .` to apply and create k8s resources. `kustomize build | kubectl delete -f -` or `kubectl delete -k .` to delete k8s resources.
 
 #### Questions - Lightning Labs 1
-1. Create a Persistent Volume called 'log-volume'. It should make use of a storage class name 'manual'. It should use 'RWX' as the access mode and have a size of '1Gi'. The volume should use the hostPath '/opt/volume/nginx'. 
-Next, create a PVC called 'log-claim' requesting a minimum of '200Mi' of storage. This PVC should bind to 'log-volume'. 
-Mount this in a pod called 'logger' at the location '/var/www/nginx'. This pod should use the image 'nginx:alpine'.
+
+1. Create a Persistent Volume called `log-volume` with the following specifications.
+    StorageClassName: `manual` (already created for you — do not create it again)
+    AccessModes: `ReadWriteMany (RWX)`
+    Capacity: `1Gi`
+    hostPath: `/opt/volume/nginx`
+    
+    Next, create a PersistentVolumeClaim named `log-claim` that:
+    Requests at least `200Mi` of storage
+    Binds to the `log-volume` created above
+    
+    Finally, create a pod named `logger` that:
+    Uses the image `nginx:alpine`
+    Mounts the `log-claim` at the path `/var/www/nginx` inside the container
 
     ```pv.yaml
     apiVersion: v1
@@ -2797,8 +2808,13 @@ Mount this in a pod called 'logger' at the location '/var/www/nginx'. This pod s
           claimName: log-claim
     ```
 
-2. We have deployed a new pod called 'secure-pod' and a service called 'secure-service'. Incoming or Outgoing connections to this pod are not working. Troubleshoot why this is happening. 
-Make sure that incoming connection from the pod 'webapp-color' are successful.
+2. We have already deployed:
+   A pod named `secure-pod`
+   A service named `secure-service` that targets this pod
+
+   Currently, both incoming and outgoing network connections to/from `secure-pod` are failing.
+   Your task is to troubleshoot and fix the issue so that:
+   Incoming connections from the pod `webapp-color` to `secure-pod` are successful.
 
     ```network.yaml
     apiVersion: networking.k8s.io/v1
@@ -2891,9 +2907,58 @@ Finally, once all pods are updated, undo the update and go back to the previous 
     k set image deployment/nginx-deploy nginx=nginx:1.17
     k rollout undo deployment/nginx-deploy
 
-5. Create a redis deployment with the following parameters: 
-Name of the deployment should be 'redis' using the 'redis:alpine' image. It should have exactly 1 replica. The container should request for '.2 CPU'. It should use the label 'app=redis'. 
-It should mount exactly 2 volumes.
-a. An Empty directory volume called data at path /redis-master-data.
-b. A configmap volume called redis-config at path /redis-master.
-c. The container should expose the port 6379.
+5. Create a redis deployment with the following parameters:
+
+    Name : `redis`
+    Image: `redis:alpine`
+    Replicas: `1`
+    Labels: `app=redis`
+    CPU Request: `0.2 CPU(200m)`
+    Container Port: `6379`
+    
+    Volumes:
+    An emptyDir volume named `data`, mounted at `/redis-master-data`
+    A ConfigMap volume named `redis-config`, mounted at `/redis-master`
+    The ConfigMap has already been created for you. Do not create it again.
+
+    ```deployment.yaml
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: redis
+      name: redis
+      namespace: default
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: redis
+      template:
+        metadata:
+          labels:
+            app: redis
+        spec:
+          containers:
+          - image: redis:alpine
+            imagePullPolicy: IfNotPresent
+            name: redis
+            ports:
+            - containerPort: 6379
+              protocol: TCP
+            resources:
+              requests:
+                cpu: 200m
+            volumeMounts:
+            - mountPath: /redis-master-data
+              name: data
+            - mountPath: /redis-master
+              name: redis-config
+          restartPolicy: Always
+          volumes:
+          - name: data
+            emptyDir: {}
+          - name: redis-config
+            configMap:
+              name: redis-config
+    ```
