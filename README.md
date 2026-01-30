@@ -2892,6 +2892,7 @@ The `kustomize build` command combines all the manifests and applies the defined
       labels:
         app: nginx-deploy
       namespace: default
+      name: nginx-deploy
     spec:
       replicas: 4
       selector:
@@ -2908,7 +2909,7 @@ The `kustomize build` command combines all the manifests and applies the defined
             app: nginx-deploy
         spec:
           containers:
-          - image: nginx:1.15
+          - image: nginx:1.16
             imagePullPolicy: IfNotPresent
             name: nginx
           restartPolicy: Always
