@@ -2816,6 +2816,7 @@ The `kustomize build` command combines all the manifests and applies the defined
    Your task is to troubleshoot and fix the issue so that:
    Incoming connections from the pod `webapp-color` to `secure-pod` are successful.
 
+    `nc -v -z -w 2 secure-service 80` will check whether it's connecting to the service via the port 80
     ```network.yaml
     apiVersion: networking.k8s.io/v1
     kind: NetworkPolicy
@@ -2856,8 +2857,7 @@ The `kustomize build` command combines all the manifests and applies the defined
       containers:
         - name: time-check
           image: busybox
-          command: ["/bin/sh", "-c"]
-          args: ["while true; do date >> /opt/time/time-check.log; sleep $TIME_FREQ; done"]
+          command: ["/bin/sh", "-c", "while true; do date; sleep $TIME_FREQ; done > /opt/time/time-check.log"]
           env:
             - name: TIME_FREQ
               valueFrom:
@@ -3007,4 +3007,27 @@ The `kustomize build` command combines all the manifests and applies the defined
             - /var/www/html/file_check
           initialDelaySeconds: 10
           periodSeconds: 60
+    ```
+
+7. Create a cronjob called `dice` that runs every `one minute`. Use the Pod template located at `/root/throw-a-dice`. The image `throw-dice` randomly returns a value between 1 and 6. The result of 6 is considered `success` and all others are `failure`. The job should be `non-parallel` and complete the task `once`. Use a `backoffLimit` of `25`. If the task is not completed within `20 seconds` the job should fail and pods should be terminated. You don't have to wait for the job completion. As long as the cronjob has been created as per the requirements.
+
+    ```cron.yaml
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: dice
+    spec:
+      schedule: "*/1 * * * *"
+      jobTemplate:
+        spec:
+          backoffLimit: 25
+          completions: 1
+          activeDeadlineSeconds: 20
+          template:
+            spec:
+              containers:
+              - name: throw-dice
+                image: throw-dice
+                imagePullPolicy: IfNotPresent
+              restartPolicy: OnFailure
     ```
