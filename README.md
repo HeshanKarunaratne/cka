@@ -3063,3 +3063,607 @@ The container should mount a `read-only` secret volume called `secret-volume` at
         kubernetes.io/hostname: controlplane
     status: {}
     ```
+   
+Mock
+```
+Mock 1
+
+	
+1. In the ckad-multi-containers namespace, create a pod named tres-containers-pod, which has 3 containers matching the below requirements:
+The first container named primero runs busybox:1.28 image and has ORDER=FIRST environment variable.
+The second container named segundo runs nginx:1.17 image and is exposed at port 8080.
+The last container named tercero runs busybox:1.31.1 image and has ORDER=THIRD environment variable.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: tres-containers-pod
+  name: tres-containers-pod
+  namespace: ckad-multi-containers
+spec:
+  containers:
+  - env:
+    - name: ORDER
+      value: FIRST
+    image: busybox:1.28
+    name: primero
+	command:
+    - /bin/sh
+    - -c
+    - sleep 3600;
+  - image: nginx:1.17
+    name: segundo
+    ports:
+    - containerPort: 8080
+  - env:
+    - name: ORDER
+      value: THIRD
+    image: busybox:1.31.1
+    name: tercero
+	command:
+    - /bin/sh
+    - -c
+    - sleep 3600;
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+
+2. Create a storage class with the name banana-sc-ckad08-str as per the properties given below:
+- Provisioner should be kubernetes.io/no-provisioner,
+- Volume binding mode should be WaitForFirstConsumer.
+- Volume expansion should be enabled.
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: banana-sc-ckad08-str
+provisioner: kubernetes.io/no-provisioner
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+
+3.In the ckad-job namespace, create a cronjob named simple-node-job to run every 30 minutes to list all the running processes inside a container that used node image (the command needs to be run in a shell).
+
+In Unix-based operating systems, ps -eaf can be use to list all the running processes.
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: simple-node-job
+  namespace: ckad-job
+spec:
+  schedule: "*/30 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: node-container
+            image: node
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - ps -eaf
+          restartPolicy: OnFailure
+
+4. In the ckad-pod-design namespace, create a pod called ckad-ubuntu-qwfefefwe that runs a ubuntu image.
+The pod's container should be named ubuntu-server; the container will sleep for 3600 seconds.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: ckad-ubuntu-qwfefefwe
+  name: ckad-ubuntu-qwfefefwe
+  namespace: ckad-pod-design
+spec:
+  containers:
+  - image: ubuntu
+    name: ubuntu-server
+    resources: {}
+    command: ["sh", "-c", "sleep 3600"]
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+
+
+5. In this task, we have to create two identical environments that are running different versions of the application. The team decided to use the Blue/green deployment method to deploy a total of 10 application pods which can mitigate common risks such as downtime and rollback capability.
+
+Also, we have to route traffic in such a way that 30% of the traffic is sent to the green-apd environment and the rest is sent to the blue-apd environment. All the development processes will happen on cluster 3 because it has enough resources for scalability and utility consumption.
+
+Specification details for creating a blue-apd deployment are listed below: -
+
+The name of the deployment is blue-apd.
+Use the label type-one: blue.
+Use the image kodekloud/webapp-color:v1.
+Add labels to the pod type-one: blue and version: v1.
+
+Specification details for creating a green-apd deployment are listed below: -
+
+The name of the deployment is green-apd.
+Use the label type-two: green.
+Use the image kodekloud/webapp-color:v2.
+Add labels to the pod type-two: green and version: v1.
+
+We have to create a service called route-apd-svc for these deployments. Details are here: -
+The name of the service is route-apd-svc.
+Use the correct service type to access the application from outside the cluster and application should listen on port 8080.
+Use the selector label version: v1.
+
+NOTE: - We do not need to increase replicas for the deployments, and all the resources should be created in the default namespace.
+
+You can check the status of the application from the terminal by running the curl command with the following syntax:
+curl http://cluster3-controlplane:NODE-PORT
+
+You can SSH into the cluster3 using ssh cluster3-controlplane command.
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    type-two: green
+  name: green-apd
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      type-two: green
+      version: v1
+  template:
+    metadata:
+      labels:
+        type-two: green
+        version: v1
+    spec:
+      containers:
+        - image: kodekloud/webapp-color:v2
+          name: green-apd
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    type-one: blue
+  name: blue-apd
+spec:
+  replicas: 7
+  selector:
+    matchLabels:
+      type-one: blue
+      version: v1
+  template:
+    metadata:
+      labels:
+        version: v1
+        type-one: blue
+    spec:
+      containers:
+        - image: kodekloud/webapp-color:v1
+          name: blue-apd
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: route-apd-svc
+  name: route-apd-svc
+spec:
+  type: NodePort
+  ports:
+    - port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    version: v1
+  
+  
+6. On cluster3, in the dev-001 namespace, one of the interns deployed one web application called news-apd.
+After successfully deploying on the worker node, we start getting alerts about the pod crashing.
+We want you to inspect the dev-001 namespace and fix those issues.
+
+Answer: /bin/sh and sleep 45000
+
+7. On the student-node, a Helm chart repository is given under the /opt/ path. It contains the files that describe a set of Kubernetes resources that can be deployed as a single unit. The files have some issues. Fix those issues and deploy them with the following specifications: -
+
+The release name should be webapp-color-apd.
+All the resources should be deployed on the frontend-apd namespace.
+The service type should be node port.
+Scale the deployment to 3.
+Application version should be 1.20.0.
+NOTE: - Remember to make necessary changes in the values.yaml and Chart.yaml files according to the specifications, and, to fix the issues, inspect the template files.
+
+
+
+8. We have deployed a pod pod22-ckad-svcn in the default namespace. Create a service svc22-ckad-svcn that will expose the pod at port 6335.
+Note: Use the imperative command for the above scenario.
+
+kubectl expose pod pod22-ckad-svcn --port=6335 --name=svc22-ckad-svcn
+
+9. You are requested to create a network policy named deny-all-svcn that denies all incoming and outgoing traffic to ckad12-svcn namespace.
+
+Note: The namespace ckad12-svcn doesn't exist. Create the namespace before creating the Policy.
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-svcn
+  namespace: ckad12-svcn
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+
+10. We have an external webserver running on student-node which is exposed at port 9999.
+
+We have also created a service called external-webserver-ckad01-svcn that can connect to our local webserver from within the cluster3 but, at the moment, it is not working as expected.
+
+Fix the issue so that other pods within cluster3 can use external-webserver-ckad01-svcn service to access the webserver.
+
+
+curl student-node:9999
+kubectl describe svc external-webserver-ckad01-svcn 
+export IP_ADDR=$(ifconfig eth0 | grep 'inet ' | awk '{print $2}')
+
+kubectl apply -f - <<EOF
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-webserver-ckad01-svcn
+  labels:
+    kubernetes.io/service-name: external-webserver-ckad01-svcn
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 9999
+endpoints:
+  - addresses:
+      - $IP_ADDR
+EOF
+
+kubectl --context cluster3 run --rm  -i test-curl-pod --image=curlimages/curl --restart=Never -- curl -m 2 external-webserver-ckad01-svcn
+
+
+11. Deploy a pod with name webapp-svcn using the kodekloud/webapp-color image with the label tier=msg.
+
+Now, Create a service webapp-service-svcn to expose the pod webapp-svcn application within the cluster on port 6379.
+
+
+kubectl run webapp-svcn --image=kodekloud/webapp-color -l tier=msg
+kubectl expose pod webapp-svcn --port=6379 --name webapp-service-svcn
+
+
+12. For this scenario, create a Service called ckad12-service that routes traffic to an external IP address.
+
+Please note that service should listen on port 53 and be of type ExternalName. Use the external IP address 8.8.8.8
+
+Create the service in the default namespace.
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ckad12-service
+spec:
+  type: ExternalName
+  externalName: 8.8.8.8
+  ports:
+    - name: http
+      port: 53
+      targetPort: 53
+
+13. 
+Create a pod named ckad17-qos-aecs-3 in namespace ckad17-nqoss-aecs with image nginx and container name ckad17-qos-ctr-3-aecs.
+
+Define other fields such that the Pod is configured to use the Quality of Service (QoS) class of Burstable.
+
+Also retrieve the name and QoS class of each Pod in the namespace ckad17-nqoss-aecs in the below format and save the output to a file named qos_status_aecs in the /root directory.
+
+Format:
+
+NAME    QOS
+pod-1   qos_class
+pod-2   qos_class
+
+
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad17-qos-aecs-3
+  namespace: ckad17-nqoss-aecs
+spec:
+  containers:
+  - name: ckad17-qos-ctr-3-aecs
+    image: nginx
+    resources:
+      limits:
+        memory: "200Mi"
+      requests:
+        memory: "100Mi"
+EOF
+
+kubectl --namespace=ckad17-nqoss-aecs get pod --output=custom-columns="NAME:.metadata.name,QOS:.status.qosClass"
+kubectl --namespace=ckad17-nqoss-aecs get pod --output=custom-columns="NAME:.metadata.name,QOS:.status.qosClass" > /root/qos_status_aecs
+
+14. Create a custom resource my-anime of kind Anime with the below specifications:
+
+Name of Anime: Death Note
+Episode Count: 37
+
+TIP: You may find the respective CRD with anime substring in it.
+
+student-node ~ ➜  kubectl config use-context cluster2
+Switched to context "cluster2".
+
+student-node ~ ➜  kubectl get crd | grep -i anime
+animes.animes.k8s.io
+
+student-node ~ ➜  kubectl get crd animes.animes.k8s.io \
+                 -o json \
+                 | jq .spec.versions[].schema.openAPIV3Schema.properties.spec.properties
+{
+  "animeName": {
+    "type": "string"
+  },
+  "episodeCount": {
+    "maximum": 52,
+    "minimum": 24,
+    "type": "integer"
+  }
+}
+
+student-node ~ ➜  k api-resources | grep anime
+animes                            an           animes.k8s.io/v1alpha1                 true         Anime
+
+student-node ~ ➜  cat << YAML | kubectl apply -f -
+ apiVersion: animes.k8s.io/v1alpha1
+ kind: Anime
+ metadata:
+   name: my-anime
+ spec:
+   animeName: "Death Note"
+   episodeCount: 37
+YAML
+anime.animes.k8s.io/my-anime created
+
+student-node ~ ➜  k get an my-anime 
+NAME       AGE
+my-anime   23s
+
+
+
+15. Create a ConfigMap named ckad04-config-multi-env-files-aecs in the default namespace from the environment(env) files provided at /root/ckad04-multi-cm directory.
+
+
+student-node ~ ➜  kubectl config use-context cluster1
+Switched to context "cluster1".
+
+student-node ~ ➜  kubectl create configmap ckad04-config-multi-env-files-aecs \
+         --from-env-file=/root/ckad04-multi-cm/file1.properties \
+         --from-env-file=/root/ckad04-multi-cm/file2.properties
+configmap/ckad04-config-multi-env-files-aecs created
+
+student-node ~ ➜  k get cm ckad04-config-multi-env-files-aecs -o yaml
+apiVersion: v1
+data:
+  allowed: "true"
+  difficulty: fairlyEasy
+  exam: ckad
+  modetype: openbook
+  practice: must
+  retries: "2"
+kind: ConfigMap
+metadata:
+  name: ckad04-config-multi-env-files-aecs
+  namespace: default
+
+
+16.We have already deployed the required pods and services in the namespace ckad01-db-sec.
+
+Create a new secret named ckad01-db-scrt-aecs with the data given below.
+
+Secret Name: ckad01-db-scrt-aecs
+Secret 1: DB_Host=sql01
+Secret 2: DB_User=root
+Secret 3: DB_Password=password123
+
+Configure ckad01-mysql-server to load environment variables from the newly created secret, where the keys from the secret should become the environment variable name in the Pod.
+
+student-node ~ ➜  kubectl config use-context cluster3
+Switched to context "cluster3".
+
+student-node ~ ➜  k get all -n ckad01-db-sec
+NAME                         READY   STATUS    RESTARTS   AGE
+pod/ckad01-mysql-server   1/1     Running   0          3m13s
+pod/ckad01-db-pod-aecs       1/1     Running   0          3m13s
+
+NAME                                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+service/ckad01-webapp-service-aecs   NodePort    10.43.190.89    <none>        8080:30080/TCP   3m13s
+service/ckad01-db-svc-aecs           ClusterIP   10.43.117.255   <none>        3306/TCP         3m13s
+
+student-node ~ ➜  kubectl create secret generic ckad01-db-scrt-aecs \
+   --namespace=ckad01-db-sec \
+   --from-literal=DB_Host=sql01 \
+   --from-literal=DB_User=root \
+   --from-literal=DB_Password=password123
+secret/ckad01-db-scrt-aecs created
+
+student-node ~ ➜  k get -n ckad01-db-sec pod ckad01-mysql-server -o yaml > webapp-pod-sec-cfg.yaml
+
+student-node ~ ➜  vim webapp-pod-sec-cfg.yaml
+
+student-node ~ ➜  cat webapp-pod-sec-cfg.yaml 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: ckad01-mysql-server
+  name: ckad01-mysql-server
+  namespace: ckad01-db-sec
+spec:
+  containers:
+  - image: kodekloud/simple-webapp-mysql
+    imagePullPolicy: Always
+    name: webapp
+    envFrom:
+    - secretRef:
+        name: ckad01-db-scrt-aecs
+
+student-node ~ ➜  kubectl replace -f webapp-pod-sec-cfg.yaml --force 
+pod "ckad01-mysql-server" deleted
+pod/ckad01-mysql-server replaced
+
+student-node ~ ➜  kubectl exec -n ckad01-db-sec ckad01-mysql-server -- printenv | egrep -w 'DB_Password=password123|DB_User=root|DB_Host=sql01'
+DB_Password=password123
+DB_User=root
+DB_Host=sql01
+
+17. Create a ResourceQuota called ckad16-rqc in the namespace ckad16-rqc-ns and enforce a limit of one ResourceQuota for the namespace.
+
+student-node ~ ➜  kubectl config use-context cluster2
+Switched to context "cluster2".
+
+student-node ~ ➜  kubectl create namespace ckad16-rqc-ns
+namespace/ckad16-rqc-ns created
+
+student-node ~ ➜  cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ckad16-rqc
+  namespace: ckad16-rqc-ns
+spec:
+  hard:
+    resourcequotas: "1"
+EOF
+
+resourcequota/ckad16-rqc created
+
+student-node ~ ➜  k get resourcequotas -n ckad16-rqc-ns
+NAME              AGE   REQUEST               LIMIT
+ckad16-rqc   20s   resourcequotas: 1/1
+
+
+18. Using the pod template on student-node at /root/ckad08-dotfile-aecs.yaml , create a pod ckad18-secret-pod in the namespace ckad18-secret with the specifications as defined below:
+
+Define a volume section named secret-volume that is backed by a Kubernetes Secret named ckad18-secret-aecs.
+Mount the secret-volume volume to the container's /etc/secret-volume directory in read-only mode, so that the container can access the secrets stored in the ckad18-secret-aecs secret.
+
+
+cat << 'EOF' | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad18-secret-pod
+  namespace: ckad18-secret
+spec:
+  restartPolicy: Never
+  volumes:
+  - name: secret-volume
+    secret:
+      secretName: ckad18-secret-aecs
+  containers:
+  - name: ckad08-top-scrt-ctr-aecs
+    image: registry.k8s.io/busybox
+    command:
+    - ls
+    - "-al"
+    - "/etc/secret-volume"
+    volumeMounts:
+    - name: secret-volume
+      readOnly: true
+      mountPath: "/etc/secret-volume"
+EOF
+
+19. Update the newly created pod simple-webapp-aom with a readinessProbe using the given specifications.
+
+Configure an HTTP readiness probe with:
+
+path value set to /ready
+port number to access container is 8080
+initialDelaySeconds set to 15 (to allow app startup time)
+
+Note: You need to recreate the pod to add the readiness probe configuration.
+
+
+cat <<EOF > simple-webapp-aom.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp-aom
+  labels:
+    name: simple-webapp-aom
+spec:
+  containers:
+  - name: simple-webapp
+    image: kodekloud/webapp-delayed-start
+    ports:
+    - containerPort: 8080
+    readinessProbe:
+      httpGet:
+        path: /ready
+        port: 8080
+      initialDelaySeconds: 15
+      periodSeconds: 5
+EOF
+
+
+20. Pod manifest file is already given under the /root/ directory called ckad-pod-busybox.yaml.
+
+There is error with manifest file correct the file and create resource.
+
+
+student-node ~ ➜  kubectl create -f ckad-pod-busybox.yaml
+Error from server (BadRequest): error when creating "ckad-pod-busybox.yaml": Pod in version "v1" cannot be handled as a Pod.
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ckad-pod-busybox
+spec:
+  containers:
+    - command:
+        - sleep
+        - "3600"
+      image: busybox
+      name: pods-simple-container
+
+
+21. Create a new pod with image redis and name ckad-probe and configure the pod with livenessProbe with command ls and set initialDelaySeconds to 5 .
+
+TIP: - Make use of the imperative command to create the above pod.
+
+
+
+kubectl run ckad-probe --image=redis  --dry-run=client -o yaml > ckad-probe.yaml
+
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: redis
+  name: ckad-probe
+spec:
+  containers:
+    - image: redis
+      imagePullPolicy: IfNotPresent
+      name: redis
+      resources: {}
+      livenessProbe:
+        exec:
+          command:
+            - ls
+        initialDelaySeconds: 5
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+```
