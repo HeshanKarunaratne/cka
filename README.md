@@ -3097,6 +3097,10 @@ The container should mount a `read-only` secret volume called `secret-volume` at
                   number: 8080
     ```
 
+10. A pod called `dev-pod-dind-878516` has been deployed in the `default` namespace. Inspect the logs for the container called `log-x` and redirect the warnings to `/opt/dind-878516_logs.txt` on the `controlplane` node
+
+k logs dev-pod-dind-878516 -c log-x | grep -i WARNING > /opt/dind-878516_logs.txt
+
 Mock
 ```
 Mock 1
