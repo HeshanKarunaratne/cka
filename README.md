@@ -3101,110 +3101,100 @@ The container should mount a `read-only` secret volume called `secret-volume` at
 
 k logs dev-pod-dind-878516 -c log-x | grep -i WARNING > /opt/dind-878516_logs.txt
 
-Mock
-```
-Mock 1
 
-	
-1. In the ckad-multi-containers namespace, create a pod named tres-containers-pod, which has 3 containers matching the below requirements:
-The first container named primero runs busybox:1.28 image and has ORDER=FIRST environment variable.
-The second container named segundo runs nginx:1.17 image and is exposed at port 8080.
-The last container named tercero runs busybox:1.31.1 image and has ORDER=THIRD environment variable.
+#### Mock Questions
 
-apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: null
-  labels:
-    run: tres-containers-pod
-  name: tres-containers-pod
-  namespace: ckad-multi-containers
-spec:
-  containers:
-  - env:
-    - name: ORDER
-      value: FIRST
-    image: busybox:1.28
-    name: primero
-	command:
-    - /bin/sh
-    - -c
-    - sleep 3600;
-  - image: nginx:1.17
-    name: segundo
-    ports:
-    - containerPort: 8080
-  - env:
-    - name: ORDER
-      value: THIRD
-    image: busybox:1.31.1
-    name: tercero
-	command:
-    - /bin/sh
-    - -c
-    - sleep 3600;
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-status: {}
+1. In the `ckad-multi-containers` namespace, create a pod named `tres-containers-pod`, which has 3 containers matching the below requirements:
+The first container named `primero` runs `busybox:1.28` image and has `ORDER=FIRST` environment variable. The second container named `segundo` runs `nginx:1.17` image and is exposed at port `8080`. The last container named `tercero` runs `busybox:1.31.1` image and has `ORDER=THIRD` environment variable.
 
-2. Create a storage class with the name banana-sc-ckad08-str as per the properties given below:
-- Provisioner should be kubernetes.io/no-provisioner,
-- Volume binding mode should be WaitForFirstConsumer.
-- Volume expansion should be enabled.
-
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: banana-sc-ckad08-str
-provisioner: kubernetes.io/no-provisioner
-allowVolumeExpansion: true
-volumeBindingMode: WaitForFirstConsumer
-
-3.In the ckad-job namespace, create a cronjob named simple-node-job to run every 30 minutes to list all the running processes inside a container that used node image (the command needs to be run in a shell).
-
-In Unix-based operating systems, ps -eaf can be use to list all the running processes.
-
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: simple-node-job
-  namespace: ckad-job
-spec:
-  schedule: "*/30 * * * *"
-  jobTemplate:
+    ```
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        run: tres-containers-pod
+      name: tres-containers-pod
+      namespace: ckad-multi-containers
     spec:
-      template:
+      containers:
+      - env:
+        - name: ORDER
+          value: FIRST
+        image: busybox:1.28
+        name: primero
+        command:
+        - /bin/sh
+        - -c
+        - sleep 3600;
+      - image: nginx:1.17
+        name: segundo
+        ports:
+        - containerPort: 8080
+      - env:
+        - name: ORDER
+          value: THIRD
+        image: busybox:1.31.1
+        name: tercero
+        command:
+        - /bin/sh
+        - -c
+        - sleep 3600;
+    ```
+
+2. Create a `storage class` with the name `banana-sc-ckad08-str` as per the properties given below: Provisioner should be `kubernetes.io/no-provisioner`,Volume binding mode should be `WaitForFirstConsumer`, Volume expansion should be `enabled`
+
+    ```
+    apiVersion: storage.k8s.io/v1
+    kind: StorageClass
+    metadata:
+      name: banana-sc-ckad08-str
+    provisioner: kubernetes.io/no-provisioner
+    allowVolumeExpansion: true
+    volumeBindingMode: WaitForFirstConsumer
+    ```
+
+3. In the `ckad-job namespace`, create a `cronjob` named `simple-node-job` to run `every 30 minutes` to list all the running processes inside a container that used `node` image (the command needs to be run in a shell). In Unix-based operating systems, `ps -eaf` can be used to list all the running processes.
+
+    ```
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: simple-node-job
+      namespace: ckad-job
+    spec:
+      schedule: "*/30 * * * *"
+      jobTemplate:
         spec:
-          containers:
-          - name: node-container
-            image: node
-            imagePullPolicy: IfNotPresent
-            command:
-            - /bin/sh
-            - -c
-            - ps -eaf
-          restartPolicy: OnFailure
+          template:
+            spec:
+              containers:
+              - name: node-container
+                image: node
+                imagePullPolicy: IfNotPresent
+                command:
+                - /bin/sh
+                - -c
+                - ps -eaf
+              restartPolicy: OnFailure
+    ```
 
-4. In the ckad-pod-design namespace, create a pod called ckad-ubuntu-qwfefefwe that runs a ubuntu image.
-The pod's container should be named ubuntu-server; the container will sleep for 3600 seconds.
+4. In the `ckad-pod-design` namespace, create a pod called `ckad-ubuntu-qwfefefwe` that runs an `ubuntu` image. The pod's container should be `named ubuntu-server`; the container will `sleep for 3600 seconds`.
 
-apiVersion: v1
-kind: Pod
-metadata:
-  creationTimestamp: null
-  labels:
-    run: ckad-ubuntu-qwfefefwe
-  name: ckad-ubuntu-qwfefefwe
-  namespace: ckad-pod-design
-spec:
-  containers:
-  - image: ubuntu
-    name: ubuntu-server
-    resources: {}
-    command: ["sh", "-c", "sleep 3600"]
-  dnsPolicy: ClusterFirst
-  restartPolicy: Always
-
+    ```
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        run: ckad-ubuntu-qwfefefwe
+      name: ckad-ubuntu-qwfefefwe
+      namespace: ckad-pod-design
+    spec:
+      containers:
+      - image: ubuntu
+        name: ubuntu-server
+        command: ["sh", "-c", "sleep 3600"]
+      restartPolicy: Always
+    ```
 
 5. In this task, we have to create two identical environments that are running different versions of the application. The team decided to use the Blue/green deployment method to deploy a total of 10 application pods which can mitigate common risks such as downtime and rollback capability.
 
