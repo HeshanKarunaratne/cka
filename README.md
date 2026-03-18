@@ -3097,9 +3097,9 @@ The container should mount a `read-only` secret volume called `secret-volume` at
                   number: 8080
     ```
 
-10. A pod called `dev-pod-dind-878516` has been deployed in the `default` namespace. Inspect the logs for the container called `log-x` and redirect the warnings to `/opt/dind-878516_logs.txt` on the `controlplane` node
+10. A pod called `dev-pod-find-878516` has been deployed in the `default` namespace. Inspect the logs for the container called `log-x` and redirect the warnings to `/opt/find-878516_logs.txt` on the `controlplane` node
 
-k logs dev-pod-dind-878516 -c log-x | grep -i WARNING > /opt/dind-878516_logs.txt
+k logs dev-pod-find-878516 -c log-x | grep -i WARNING > /opt/find-878516_logs.txt
 
 
 #### Mock Questions
@@ -3141,7 +3141,7 @@ The first container named `primero` runs `busybox:1.28` image and has `ORDER=FIR
         - sleep 3600;
     ```
 
-2. Create a `storage class` with the name `banana-sc-ckad08-str` as per the properties given below: Provisioner should be `kubernetes.io/no-provisioner`,Volume binding mode should be `WaitForFirstConsumer`, Volume expansion should be `enabled`
+2. Create a storage class with the name `banana-sc-ckad08-str` as per the properties given below: Provisioner should be `kubernetes.io/no-provisioner`,Volume binding mode should be `WaitForFirstConsumer`, Volume expansion should be `enabled`
 
     ```
     apiVersion: storage.k8s.io/v1
@@ -3153,7 +3153,7 @@ The first container named `primero` runs `busybox:1.28` image and has `ORDER=FIR
     volumeBindingMode: WaitForFirstConsumer
     ```
 
-3. In the `ckad-job namespace`, create a `cronjob` named `simple-node-job` to run `every 30 minutes` to list all the running processes inside a container that used `node` image (the command needs to be run in a shell). In Unix-based operating systems, `ps -eaf` can be used to list all the running processes.
+3. In the `ckad-job` namespace, create a cronjob named `simple-node-job` to run `every 30 minutes` to list all the running processes inside a container that used `node` image (the command needs to be run in a shell). In Unix-based operating systems, `ps -eaf` can be used to list all the running processes.
 
     ```
     apiVersion: batch/v1
@@ -3178,7 +3178,7 @@ The first container named `primero` runs `busybox:1.28` image and has `ORDER=FIR
               restartPolicy: OnFailure
     ```
 
-4. In the `ckad-pod-design` namespace, create a pod called `ckad-ubuntu-qwfefefwe` that runs an `ubuntu` image. The pod's container should be `named ubuntu-server`; the container will `sleep for 3600 seconds`.
+4. In the `ckad-pod-design` namespace, create a pod called `ckad-ubuntu-qwfefefwe` that runs an `ubuntu` image. The pod's container should be named `ubuntu-server`; the container will `sleep for 3600 seconds`.
 
     ```
     apiVersion: v1
@@ -3453,4 +3453,63 @@ pod-2   qos_class
                 - ls
             initialDelaySeconds: 5
       restartPolicy: Never
+    ```
+
+18. There is a requirement to share a volume between main container and a sidecar container that are running within the same pod. Use the following instructions to create the pod and related objects: Create a pod named `grape-pod-ckad06-str`. The main container named `nginx` and should use the `nginx` image and mount a volume called `grape-vol-ckad06-str` at path `/var/log/nginx`. The sidecar container called `busybox` and can use `busybox` image. Next, mount the same volume called `grape-vol-ckad06-str` at the path `/usr/src`. The volume should be of type `emptyDir`.
+
+    ```
+    apiVersion: v1
+    kind: Pod
+    metadata:
+      labels:
+        app: grape-pod-ckad06-str
+      name: grape-pod-ckad06-str
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts:
+          - name: grape-vol-ckad06-str
+            mountPath: /var/log/nginx
+      - image: busybox
+        name: busybox
+        command: ["/bin/sh", "-c", "sleep 3600"]
+        volumeMounts:
+          - name: grape-vol-ckad06-str
+            mountPath: /usr/src
+      volumes:
+      - name: grape-vol-ckad06-str
+        emptyDir: {}
+    ```
+
+19. In the `ckad-job` namespace, schedule a job called `learning-every-minute` that prints this message in the shell every minute: `I am practicing for CKAD certification`. In case the container in pod failed for any reason, it should be restarted automatically. Use `busybox:1.28` image for the cronjob.
+
+    ```
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      name: learning-every-minute
+      namespace: ckad-job
+    spec:
+      schedule: "*/1 * * * *"
+      jobTemplate:
+        spec:
+          template:
+            spec:
+              containers:
+              - name: busybox-container
+                image: busybox:1.28
+                imagePullPolicy: IfNotPresent
+                command: ["/bin/sh","-c","echo 'I am practicing for CKAD certification'"]
+              restartPolicy: OnFailure
+    ```
+
+20. In the `ckad-pod-design` namespace, we created a pod named `basic-nginx` that runs the `nginx:1.17` image. Take appropriate actions to update the `index.html` page of this NGINX container with below value instead of default NGINX welcome page: `Hello from KodeKloud!`. NOTE: By default NGINX web server default location is at `/usr/share/nginx/html` which is located on the default file system of the Linux.
+
+    ```
+    k exec -it basic-nginx -n ckad-pod-design -- /bin/bash
+    cd /usr/share/nginx/html
+    echo "Hello from KodeKloud!" > index.html
+    kubectl port-forward basic-nginx 8080:80 -n ckad-pod-design
+    curl localhost:8080
     ```
