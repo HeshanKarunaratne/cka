@@ -3513,3 +3513,115 @@ pod-2   qos_class
     kubectl port-forward basic-nginx 8080:80 -n ckad-pod-design
     curl localhost:8080
     ```
+
+21. Team Neptune needs a Job template located at `/opt/course/3/job.yaml`. This Job should run image `busybox:1.31.0` and execute `sleep 2 && echo done`. It should be in namespace `neptune`, run a total of `3 times` and should execute `2 runs in parallel`. Start the Job and check its history. Each pod created by the Job should have the label `id: awesome-job`. The job should be named `neb-new-job` and the container `neb-new-job-container`.
+
+    ```
+    k create job neb-new-job --namespace=neptune --image=busybox:1.31.0 --dry-run=client -o yaml > /opt/course/3/job.yaml
+    ```
+
+    ```
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      name: neb-new-job
+      namespace: neptune
+    spec:
+      completions: 3
+      parallelism: 2
+      template:
+        metadata:
+          labels:
+             id: awesome-job
+        spec:
+          containers:
+          - name: neb-new-job-container
+            image: busybox:1.31.0
+            command:
+            - /bin/sh
+            - -c
+            - sleep 2 && echo done
+          restartPolicy: Never
+    ```
+
+22. Team Mercury asked you to perform some operations using Helm, all in Namespace `mercury`:
+Delete release `internal-issue-report-apiv1`.
+Upgrade release `internal-issue-report-apiv2` to any newer version of chart `bitnami/nginx` available.
+Install a new release `internal-issue-report-apache` of chart `bitnami/apache`. The Deployment should have `two replicas`, set these via Helm-values during install.
+There seems to be a broken release, stuck in pending-install state. Find it and delete it.
+
+    ```
+    # Delete the release
+    helm -n mercury uninstall internal-issue-report-apiv1
+    
+    # Update the repo to get the latest versions
+    helm repo update
+    
+    # Search the correct chart and version avaiable in the repo
+    helm search repo nginx
+    
+    # Upgrade the release to the latest version available
+    helm -n mercury upgrade internal-issue-report-apiv2 bitnami/nginx
+    
+    # Check current replicaCount in bitnami/apache chart
+    helm show values bitnami/apache | grep -i replicaCount
+    
+    # Install the new release with 2 replicas
+    helm -n mercury install internal-issue-report-apache bitnami/apache --set replicaCount=2
+    
+    # Verify installation
+    helm -n mercury ls
+    
+    # Check all releases in the namespace
+    helm -n mercury ls --all
+    
+    # Unistall the release
+    helm -n mercuty uninstall <NAME>
+    ```
+    
+23. In Namespace `pluto` there is single Pod named `holy-api`. It has been working okay for a while now but Team Pluto needs it to be more reliable. Convert the Pod into a `Deployment` named `holy-api` with `3 replicas` and delete the single Pod once done. The raw Pod template file is available at `/opt/course/9/holy-api-pod.yaml`. In addition, the new Deployment should set `allowPrivilegeEscalation: false` and `privileged: false` for the security context on `container` level. Please create the Deployment and save its yaml under `/opt/course/9/holy-api-deployment.yaml`.
+
+    ```
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata: 
+      name: holi-api
+      namespace: pluto
+      labels: 
+        id: holi-api-deployment
+    spec: 
+      template:
+        metadata:
+          name: holi-api
+          labels:
+            id: holi-api-deployment
+        spec:
+          containers:
+            - name: holi-api-container
+              image: nginx:1.17.3-alpine
+              securityContext:
+                allowPrivilegeEscalation: false
+                privileged: false
+      replicas: 3
+      selector:
+        matchLabels:
+          id: holi-api-deployment
+    ```
+
+    ```
+    k delete pod -n pluto holi-api --force --grace-period=0
+    ```
+
+24. Team Pluto needs a new cluster internal Service. Create a `ClusterIP Service` named `project-plt-6cc-svc` in Namespace `pluto`. This Service should expose a single Pod named `project-plt-6cc-api` of image `nginx:1.17.3-alpine`, create that Pod as well. The Pod should be identified by label `project: plt-6cc-api`. The Service should use tcp port redirection of `3333:80`.
+Finally use for example curl from a temporary `nginx:alpine` Pod to get the response from the Service. Write the response into `/opt/course/10/service_test.html` on ckad9043. Also check if the logs of Pod project-plt-6cc-api show the request and write those into `/opt/course/10/service_test.log` on ckad9043.
+
+    ```
+    # Create the Pod
+    k run project-plt-6cc-api -n pluto --image=nginx:1.17.3-alpine --labels project=plt-6cc-api --port=80
+    
+    # Expose the pod with a service
+    k -n pluto expose pod project-plt-6cc-api --name=project-plt-6cc-svc --port=3333 --target-port=80
+    
+    # Create a temp container to test the service
+    k run temp --restart=Never --rm --image=ngin:alpine -i -- curl http://project-plt-6cc-svc.pluto:3333 > /opt/course/10/service_test.html
+    ```
