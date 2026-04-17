@@ -3612,8 +3612,7 @@ There seems to be a broken release, stuck in pending-install state. Find it and 
     k delete pod -n pluto holi-api --force --grace-period=0
     ```
 
-24. Team Pluto needs a new cluster internal Service. Create a `ClusterIP Service` named `project-plt-6cc-svc` in Namespace `pluto`. This Service should expose a single Pod named `project-plt-6cc-api` of image `nginx:1.17.3-alpine`, create that Pod as well. The Pod should be identified by label `project: plt-6cc-api`. The Service should use tcp port redirection of `3333:80`.
-Finally use for example curl from a temporary `nginx:alpine` Pod to get the response from the Service. Write the response into `/opt/course/10/service_test.html` on ckad9043. Also check if the logs of Pod project-plt-6cc-api show the request and write those into `/opt/course/10/service_test.log` on ckad9043.
+24. Team Pluto needs a new cluster internal Service. Create a `ClusterIP Service` named `project-plt-6cc-svc` in Namespace `pluto`. This Service should expose a single Pod named `project-plt-6cc-api` of image `nginx:1.17.3-alpine`, create that Pod as well. The Pod should be identified by label `project: plt-6cc-api`. The Service should use tcp port redirection of `3333:80`. Finally use for example curl from a temporary `nginx:alpine` Pod to get the response from the Service. Write the response into `/opt/course/10/service_test.html` on ckad9043. Also check if the logs of Pod project-plt-6cc-api show the request and write those into `/opt/course/10/service_test.log` on ckad9043.
 
     ```
     # Create the Pod
@@ -3624,4 +3623,102 @@ Finally use for example curl from a temporary `nginx:alpine` Pod to get the resp
     
     # Create a temp container to test the service
     k run temp --restart=Never --rm --image=ngin:alpine -i -- curl http://project-plt-6cc-svc.pluto:3333 > /opt/course/10/service_test.html
+    ```
+
+25. Create a new PersistentVolume named `earth-project-earthflower-pv`. It should have a capacity of `2Gi`, accessMode `ReadWriteOnce`, hostPath `/Volumes/Data` and no storageClassName defined. Next create a new PersistentVolumeClaim in Namespace earth named `earth-project-earthflower-pvc`. It should request `2Gi` storage, accessMode `ReadWriteOnce` and should not define a storageClassName. The PVC should bound to the PV correctly. Finally, create a new Deployment `project-earthflower` in Namespace `earth` which mounts that volume at `/tmp/project-data`. The Pods of that Deployment should be of image `httpd:2.4.41-alpine`.
+
+    ```
+    apiVersion: v1
+    kind: PersistentVolume
+    metadata:
+      name: earth-project-earthflower-pv
+    spec:
+      capacity:
+        storage: 2Gi
+      accessModes:
+        - ReadWriteOnce
+      persistentVolumeReclaimPolicy: Retain
+      hostPath:
+        path: "/Volumes/Data"
+    ```
+    
+    ```
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      namespace: earth
+      name: earth-project-earthflower-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+    ```
+    
+    ```
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app: project-earthflower
+      name: project-earthflower
+      namespace: earth
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: project-earthflower
+      strategy: {}
+      template:
+        metadata:
+          labels:
+            app: project-earthflower
+        spec:
+          containers:
+          - image: httpd:2.4.41-alpine
+            name: httpd
+            volumeMounts:
+            - name: volume
+              mountPath: /tmp/project-data
+          volumes:
+          - name: volume
+            persistentVolumeClaim:
+              claimName: earth-project-earthflower-pvc
+    ```
+
+26. You need to make changes on an existing Pod in Namespace `moon` called `secret-handler`. Create a new Secret `secret1` which contains `user=test` and `pass=pwd`. The Secret's content should be available in Pod `secret-handler` as environment variables `SECRET1_USER` and `SECRET1_PASS`. The yaml for Pod secret-handler is available at `/opt/course/14/secret-handler.yaml`. There is existing yaml for another Secret at `/opt/course/14/secret2.yaml`, create this Secret and mount it inside the same Pod at `/tmp/secret2`. Your changes should be saved under /opt/course/14/secret-handler-new.yaml on ckad9043. Both Secrets should only be available in Namespace `moon`.
+
+    ```
+    k create secret -n moon secret1 --from-literal user=test --from-literal pass=pwd
+    ```
+    
+    ```
+    apiVersion: v1
+    kind: Pod
+    metadata: 
+      name: secret-handler
+      namespace: moon
+    spec: 
+      containers:
+      - name: secret-handler
+        image: bash:5.0.11
+        volumeMounts:
+        - mountPath: /tmp/secret2
+          name: secret2-volume
+        env:
+        - name: SECRET1_USER
+          valueFrom:
+            secretKeyRef:
+              name: secret1
+              key: user 
+        - name: SECRET1_PASS
+          valueFrom:
+            secretKeyRef:
+              name: secret1
+              key: pass
+      volumes:
+      - name: secret2-volume
+        secret:
+          secretName: secret2
     ```
