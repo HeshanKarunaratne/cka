@@ -3691,6 +3691,9 @@ There seems to be a broken release, stuck in pending-install state. Find it and 
 
     ```
     k create secret -n moon secret1 --from-literal user=test --from-literal pass=pwd
+    
+    # Show Existing Secerts mounted in the container
+    k -n moon exec secret-handler -- env | grep -i SECRET
     ```
     
     ```
@@ -3721,4 +3724,63 @@ There seems to be a broken release, stuck in pending-install state. Find it and 
       - name: secret2-volume
         secret:
           secretName: secret2
+    ```
+
+27. Team Moon pie has a nginx server Deployment called `web-moon` in Namespace `moon`. Someone started configuring it but it was never completed. To complete please create a ConfigMap called `configmap-web-moon-html` containing the content of file `/opt/course/15/web-moon.html` under the data key-name `index.html`. The Deployment 'web-moon' is already configured to work with this ConfigMap and serve its content. Test the nginx configuration for example using curl from a temporary 'nginx:alpine' Pod.
+
+    ```
+    # Create the configMap
+    k create configmap -n moon web-moon --from-file index.html=/opt/course/15/web-moon.html
+    
+    # Restart the deployment
+    k rollout restart deployment -n moon web-moon 
+    
+    # Check if the correct content is served by the nginx server
+    k -n moon run tmp --restart=Never --rm -i --image=nginx:alpine -- curl <POD_IP>
+    ```
+
+28. In Namespace `venus` you'll find two Deployments named `api` and `frontend`. Both Deployments are exposed inside the cluster using Services. Create a NetworkPolicy named `np1` which restricts outgoing tcp connections from Deployment frontend and only allows those going to Deployment api. Make sure the NetworkPolicy still allows outgoing traffic on UDP/TCP ports 53 for DNS resolution. Test using: `wget www.google.com` and `wget api:2222` from a Pod of Deployment frontend
+
+    ```
+    # Check all resources in venus namespace
+    k -n venus get all
+    
+    # Connecting to the service from a temp container
+    # --rm : Remove, -i : interactive, -O- : output to a terminal
+    k -n venus run tmp --rm -i --restart=Never --image=busybox -- wget -O- frontend:80
+    ```
+
+    ```
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: np1
+      namespace: venus
+    spec:
+      podSelector:
+        matchLabels:
+          id : frontend
+      policyTypes:
+      - Egress
+      egress:
+      - to:
+        - podSelector:
+            matchLabels:
+               id: api
+        ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    ```
+
+29. Team Sunny needs to identify some of their Pods in namespace `sun`. They ask you to add a new label `protected: true` to all Pods with an existing label `type: worker` or `type: runner`. Also add an annotation `protected: do not delete this pod` to all Pods having the new label protected: true.
+
+    ```
+    # Add a new label to existing pods
+    k -n sun label pod -l type=worker protected=true
+    k -n sun label pod -l type=runner protected=true
+    
+    # Add a new annotation to the pods
+    k -n sun annotate pod -l protected=true protected="do not delete this pod"
     ```
